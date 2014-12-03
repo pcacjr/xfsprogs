@@ -129,13 +129,12 @@ clear_dinode_core(struct xfs_mount *mp, xfs_dinode_t *dinoc, xfs_ino_t ino_num)
 		dinoc->di_magic = cpu_to_be16(XFS_DINODE_MAGIC);
 	}
 
-	if (!XFS_DINODE_GOOD_VERSION(dinoc->di_version) ||
-	    (!fs_inode_nlink && dinoc->di_version > 1))  {
+	if (!XFS_DINODE_GOOD_VERSION(dinoc->di_version)) {
 		__dirty_no_modify_ret(dirty);
 		if (xfs_sb_version_hascrc(&mp->m_sb))
 			dinoc->di_version = 3;
 		else
-			dinoc->di_version = (fs_inode_nlink) ? 2 : 1;
+			dinoc->di_version = 2;
 	}
 
 	if (be16_to_cpu(dinoc->di_mode) != 0)  {
@@ -589,7 +588,7 @@ process_bmbt_reclist_int(
 		ftype = ftype_regular;
 
 	for (i = 0; i < *numrecs; i++) {
-		libxfs_bmbt_disk_get_all(rp + i, &irec);
+		libxfs_bmbt_disk_get_all((rp +i), &irec);
 		if (i == 0)
 			*last_key = *first_key = irec.br_startoff;
 		else
@@ -949,7 +948,7 @@ _("bad numrecs 0 in inode %" PRIu64 " bmap btree root block\n"),
 	init_bm_cursor(&cursor, level + 1);
 
 	pp = XFS_BMDR_PTR_ADDR(dib, 1,
-		xfs_bmdr_maxrecs(mp, XFS_DFORK_SIZE(dip, mp, whichfork), 0));
+		xfs_bmdr_maxrecs(XFS_DFORK_SIZE(dip, mp, whichfork), 0));
 	pkey = XFS_BMDR_KEY_ADDR(dib, 1);
 	last_key = NULLDFILOFF;
 
@@ -1191,8 +1190,7 @@ _("bad number of extents (%d) in symlink %" PRIu64 " data fork\n"),
 	expected_offset = 0;
 
 	for (i = 0; i < numrecs; i++)  {
-		libxfs_bmbt_disk_get_all(rp + i, &irec);
-
+		libxfs_bmbt_disk_get_all((rp +i), &irec);
 		if (irec.br_startoff != expected_offset)  {
 			do_warn(
 _("bad extent #%d offset (%" PRIu64 ") in symlink %" PRIu64 " data fork\n"),
@@ -1297,8 +1295,8 @@ _("Bad symlink buffer CRC, block %" PRIu64 ", inode %" PRIu64 ".\n"
 
 		src = bp->b_addr;
 		if (xfs_sb_version_hascrc(&mp->m_sb)) {
-			if (!libxfs_symlink_hdr_ok(mp, lino, offset,
-						byte_cnt, bp)) {
+			if (!libxfs_symlink_hdr_ok(lino, offset,
+						   byte_cnt, bp)) {
 				do_warn(
 _("bad symlink header ino %" PRIu64 ", file block %d, disk block %" PRIu64 "\n"),
 					lino, i, fsbno);
@@ -2160,86 +2158,11 @@ process_check_inode_nlink_version(
 {
 	int		dirty = 0;
 
-	if (dino->di_version > 1 && !fs_inode_nlink)  {
-		/*
-		 * do we have a fs/inode version mismatch with a valid
-		 * version 2 inode here that has to stay version 2 or
-		 * lose links?
-		 */
-		if (be32_to_cpu(dino->di_nlink) > XFS_MAXLINK_1)  {
-			/*
-			 * yes.  are nlink inodes allowed?
-			 */
-			if (fs_inode_nlink_allowed)  {
-				/*
-				 * yes, update status variable which will
-				 * cause sb to be updated later.
-				 */
-				fs_inode_nlink = 1;
-				do_warn
-	(_("version 2 inode %" PRIu64 " claims > %u links, "),
-					lino, XFS_MAXLINK_1);
-				if (!no_modify)  {
-					do_warn(
-	_("updating superblock version number\n"));
-				} else  {
-					do_warn(
-	_("would update superblock version number\n"));
-				}
-			} else  {
-				/*
-				 * no, have to convert back to onlinks
-				 * even if we lose some links
-				 */
-				do_warn(
-	_("WARNING:  version 2 inode %" PRIu64 " claims > %u links, "),
-					lino, XFS_MAXLINK_1);
-				if (!no_modify)  {
-					do_warn(_("converting back to version 1,\n"
-						"this may destroy %d links\n"),
-						be32_to_cpu(dino->di_nlink) -
-							XFS_MAXLINK_1);
-
-					dino->di_version = 1;
-					dino->di_nlink = cpu_to_be32(XFS_MAXLINK_1);
-					dino->di_onlink = cpu_to_be16(XFS_MAXLINK_1);
-					dirty = 1;
-				} else  {
-					do_warn(_("would convert back to version 1,\n"
-						"\tthis might destroy %d links\n"),
-						be32_to_cpu(dino->di_nlink) -
-							XFS_MAXLINK_1);
-				}
-			}
-		} else  {
-			/*
-			 * do we have a v2 inode that we could convert back
-			 * to v1 without losing any links?  if we do and
-			 * we have a mismatch between superblock bits and the
-			 * version bit, alter the version bit in this case.
-			 *
-			 * the case where we lost links was handled above.
-			 */
-			do_warn(_("found version 2 inode %" PRIu64 ", "), lino);
-			if (!no_modify)  {
-				do_warn(_("converting back to version 1\n"));
-				dino->di_version = 1;
-				dino->di_onlink = cpu_to_be16(
-					be32_to_cpu(dino->di_nlink));
-				dirty = 1;
-			} else  {
-				do_warn(_("would convert back to version 1\n"));
-			}
-		}
-	}
-
 	/*
-	 * ok, if it's still a version 2 inode, it's going
-	 * to stay a version 2 inode.  it should have a zero
+	 * if it's a version 2 inode, it should have a zero
 	 * onlink field, so clear it.
 	 */
-	if (dino->di_version > 1 &&
-			dino->di_onlink != 0 && fs_inode_nlink > 0) {
+	if (dino->di_version > 1 && dino->di_onlink != 0) {
 		if (!no_modify) {
 			do_warn(
 _("clearing obsolete nlink field in version 2 inode %" PRIu64 ", was %d, now 0\n"),
@@ -2331,7 +2254,6 @@ process_dinode_int(xfs_mount_t *mp,
 	}
 
 	if (!XFS_DINODE_GOOD_VERSION(dino->di_version) ||
-	    (!fs_inode_nlink && dino->di_version > 1) ||
 	    (xfs_sb_version_hascrc(&mp->m_sb) && dino->di_version < 3) )  {
 		retval = 1;
 		if (!uncertain)
@@ -2342,8 +2264,7 @@ process_dinode_int(xfs_mount_t *mp,
 			if (!no_modify) {
 				do_warn(_(" resetting version number\n"));
 				dino->di_version =
-					xfs_sb_version_hascrc(&mp->m_sb) ? 3 :
-					(fs_inode_nlink) ?  2 : 1;
+					xfs_sb_version_hascrc(&mp->m_sb) ? 3 : 2;
 				*dirty = 1;
 			} else
 				do_warn(_(" would reset version number\n"));
