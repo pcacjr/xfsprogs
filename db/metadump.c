@@ -291,7 +291,7 @@ valid_bno(
 		return 1;
 	if (agno == (mp->m_sb.sb_agcount - 1) && agbno > 0 &&
 			agbno <= (mp->m_sb.sb_dblocks -
-			 (xfs_drfsbno_t)(mp->m_sb.sb_agcount - 1) *
+			 (xfs_rfsblock_t)(mp->m_sb.sb_agcount - 1) *
 			 mp->m_sb.sb_agblocks))
 		return 1;
 
@@ -1133,7 +1133,7 @@ obfuscate_sf_attr(
 static void
 obfuscate_dir_data_block(
 	char		*block,
-	xfs_dfiloff_t	offset,
+	xfs_fileoff_t	offset,
 	int		is_block_format)
 {
 	/*
@@ -1271,7 +1271,7 @@ add_remote_vals(
 static void
 obfuscate_attr_block(
 	char			*block,
-	xfs_dfiloff_t		offset)
+	xfs_fileoff_t		offset)
 {
 	xfs_attr_leafblock_t	*leaf;
 	int			i;
@@ -1340,11 +1340,11 @@ obfuscate_attr_block(
 
 static int
 process_single_fsb_objects(
-	xfs_dfiloff_t	o,
-	xfs_dfsbno_t	s,
-	xfs_dfilblks_t	c,
+	xfs_fileoff_t	o,
+	xfs_fsblock_t	s,
+	xfs_filblks_t	c,
 	typnm_t		btype,
-	xfs_dfiloff_t	last)
+	xfs_fileoff_t	last)
 {
 	char		*dp;
 	int		ret = 0;
@@ -1413,11 +1413,11 @@ static int mfsb_length;
 
 static int
 process_multi_fsb_objects(
-	xfs_dfiloff_t	o,
-	xfs_dfsbno_t	s,
-	xfs_dfilblks_t	c,
+	xfs_fileoff_t	o,
+	xfs_fsblock_t	s,
+	xfs_filblks_t	c,
 	typnm_t		btype,
-	xfs_dfiloff_t	last)
+	xfs_fileoff_t	last)
 {
 	int		ret = 0;
 
@@ -1489,11 +1489,11 @@ process_bmbt_reclist(
 	typnm_t			btype)
 {
 	int			i;
-	xfs_dfiloff_t		o, op = NULLDFILOFF;
-	xfs_dfsbno_t		s;
-	xfs_dfilblks_t		c, cp = NULLDFILOFF;
+	xfs_fileoff_t		o, op = NULLFILEOFF;
+	xfs_fsblock_t		s;
+	xfs_filblks_t		c, cp = NULLFILEOFF;
 	int			f;
-	xfs_dfiloff_t		last;
+	xfs_fileoff_t		last;
 	xfs_agnumber_t		agno;
 	xfs_agblock_t		agbno;
 	int			error;
