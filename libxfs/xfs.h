@@ -46,8 +46,8 @@
  * define a guard and something we can check to determine what include context
  * we are running from.
  */
-#ifndef __LIBXFS_INTERNAL_XFS_H
-#define __LIBXFS_INTERNAL_XFS_H
+#ifndef __LIBXFS_INTERNAL_XFS_H__
+#define __LIBXFS_INTERNAL_XFS_H__
 
 /*
  * start by remapping all the symbols we expect external users to call
@@ -160,48 +160,45 @@
  * Now we've renamed and mapped everything, include the rest of the external
  * libxfs headers.
  */
-#include <xfs/libxfs.h>
-#include "xfs_dir2_priv.h"
+#include <xfs/platform_defs.h>
+
+#include <xfs/list.h>
+#include <xfs/hlist.h>
+#include <xfs/cache.h>
+#include <xfs/bitops.h>
+#include <xfs/kmem.h>
+#include <xfs/radix-tree.h>
+#include <xfs/swab.h>
+#include <xfs/atomic.h>
+
+#include <xfs/xfs_types.h>
+#include <xfs/xfs_arch.h>
+
+#include <xfs/xfs_fs.h>
+
+/* CRC stuff, buffer API dependent on it */
+extern uint32_t crc32_le(uint32_t crc, unsigned char const *p, size_t len);
+extern uint32_t crc32c_le(uint32_t crc, unsigned char const *p, size_t len);
+
+#define crc32(c,p,l)	crc32_le((c),(unsigned char const *)(p),(l))
+#define crc32c(c,p,l)	crc32c_le((c),(unsigned char const *)(p),(l))
+
+#include <xfs/xfs_cksum.h>
+
+/*
+ * This mirrors the kernel include for xfs_buf.h - it's implicitly included in
+ * every files via a similar include in the kernel xfs_linux.h.
+ */
+#include <xfs/libxfs_io.h>
+
+/* for all the support code that uses progname in error messages */
+extern char    *progname;
 
 #undef ASSERT
 #define ASSERT(ex) assert(ex)
 
 typedef __uint32_t		uint_t;
 typedef __uint32_t		inst_t;		/* an instruction */
-
-/*
- * Argument structure for xfs_bmap_alloc.
- */
-typedef struct xfs_bmalloca {
-	xfs_fsblock_t		*firstblock; /* i/o first block allocated */
-	struct xfs_bmap_free    *flist;	/* bmap freelist */
-	struct xfs_trans        *tp;	/* transaction pointer */
-	struct xfs_inode        *ip;	/* incore inode pointer */
-	struct xfs_bmbt_irec    prev;	/* extent before the new one */
-	struct xfs_bmbt_irec    got;	/* extent after, or delayed */
-
-	xfs_fileoff_t		offset;	/* offset in file filling in */
-	xfs_extlen_t		length;	/* i/o length asked/allocated */
-	xfs_fsblock_t		blkno;	/* starting block of new extent */
-
-	struct xfs_btree_cur    *cur;	/* btree cursor */
-	xfs_extnum_t		idx;	/* current extent index */
-	int			nallocs;/* number of extents alloc'd */
-	int			logflags;/* flags for transaction logging */
-
-	xfs_extlen_t		total;	/* total blocks needed for xaction */
-	xfs_extlen_t		minlen;	/* minimum allocation size (blocks) */
-	xfs_extlen_t		minleft; /* amount must be left after alloc */
-	char			eof;	/* set if allocating past last extent */
-	char			wasdel;	/* replacing a delayed allocation */
-	char			userdata;/* set if is user data */
-	char			aeof;	/* allocated space at eof */
-	char			conv;	/* overwriting unwritten extents */
-	char			stack_switch;
-	int			flags;
-} xfs_bmalloca_t;
-
-#define xfs_bmapi_allocate		__xfs_bmapi_allocate
 
 #ifndef EWRONGFS
 #define EWRONGFS	EINVAL
@@ -211,10 +208,11 @@ typedef struct xfs_bmalloca {
 
 #define STATIC				static
 
-#define ATTR_ROOT			LIBXFS_ATTR_ROOT
-#define ATTR_SECURE			LIBXFS_ATTR_SECURE
-#define ATTR_CREATE			LIBXFS_ATTR_CREATE
-#define ATTR_REPLACE			LIBXFS_ATTR_REPLACE
+/* XXX: need to push these out to make LIBXFS_ATTR defines */
+#define ATTR_ROOT			0x0002
+#define ATTR_SECURE			0x0008
+#define ATTR_CREATE			0x0010
+#define ATTR_REPLACE			0x0020
 #define ATTR_KERNOTIME			0
 #define ATTR_KERNOVAL			0
 
@@ -222,6 +220,14 @@ typedef struct xfs_bmalloca {
 
 #define XFS_IGET_CREATE			0x1
 #define XFS_IGET_UNTRUSTED		0x2
+
+extern void cmn_err(int, char *, ...);
+enum ce { CE_DEBUG, CE_CONT, CE_NOTE, CE_WARN, CE_ALERT, CE_PANIC };
+
+#define xfs_notice(mp,fmt,args...)		cmn_err(CE_NOTE,fmt, ## args)
+#define xfs_warn(mp,fmt,args...)		cmn_err(CE_WARN,fmt, ## args)
+#define xfs_hex_dump(d,n)		((void) 0)
+
 
 /* stop unused var warnings by assigning mp to itself */
 #define XFS_CORRUPTION_ERROR(e,l,mp,m)	do { \
@@ -332,6 +338,10 @@ roundup_64(__uint64_t x, __uint32_t y)
 	do_div(x, y);
 	return x * y;
 }
+
+#define __round_mask(x, y) ((__typeof__(x))((y)-1))
+#define round_up(x, y) ((((x)-1) | __round_mask(x, y))+1)
+#define round_down(x, y) ((x) & ~__round_mask(x, y))
 
 /* buffer management */
 #define XFS_BUF_LOCK			0
@@ -472,32 +482,31 @@ do { \
 
 /*
  * Prototypes for kernel static functions that are aren't in their
- * associated header files
+ * associated header files.
  */
+struct xfs_da_args;
+struct xfs_bmap_free;
+struct xfs_bmap_free_item;
+struct xfs_mount;
+struct xfs_sb;
+struct xfs_trans;
+struct xfs_inode;
+struct xfs_log_item;
+struct xfs_buf;
+struct xfs_buf_map;
+struct xfs_buf_log_item;
+struct xfs_buftarg;
 
 /* xfs_attr.c */
 int xfs_attr_rmtval_get(struct xfs_da_args *);
 
 /* xfs_bmap.c */
-void xfs_bmap_del_free(xfs_bmap_free_t *, xfs_bmap_free_item_t *,
-			xfs_bmap_free_item_t *);
-
-/*
- * For regular files we only update the on-disk filesize when actually
- * writing data back to disk.  Until then only the copy in the VFS inode
- * is uptodate.
- */
-static inline xfs_fsize_t XFS_ISIZE(struct xfs_inode *ip)
-{
-	if (S_ISREG(ip->i_d.di_mode))
-		return ip->i_size;
-	return ip->i_d.di_size;
-}
-#define XFS_IS_REALTIME_INODE(ip) ((ip)->i_d.di_flags & XFS_DIFLAG_REALTIME)
+void xfs_bmap_del_free(struct xfs_bmap_free *, struct xfs_bmap_free_item *,
+			struct xfs_bmap_free_item *);
 
 /* xfs_mount.c */
-int xfs_initialize_perag_data(xfs_mount_t *, xfs_agnumber_t);
-void xfs_mount_common(xfs_mount_t *, xfs_sb_t *);
+int xfs_initialize_perag_data(struct xfs_mount *, xfs_agnumber_t);
+void xfs_mount_common(struct xfs_mount *, struct xfs_sb *);
 
 /*
  * logitem.c and trans.c prototypes
@@ -511,21 +520,25 @@ void xfs_trans_del_item(struct xfs_log_item *);
 void xfs_trans_free_items(struct xfs_trans *, int);
 
 /* xfs_inode_item.c */
-void xfs_inode_item_init (xfs_inode_t *, xfs_mount_t *);
+void xfs_inode_item_init(struct xfs_inode *, struct xfs_mount *);
 
 /* xfs_buf_item.c */
-void xfs_buf_item_init (xfs_buf_t *, xfs_mount_t *);
-void xfs_buf_item_log (xfs_buf_log_item_t *, uint, uint);
+void xfs_buf_item_init(struct xfs_buf *, struct xfs_mount *);
+void xfs_buf_item_log(struct xfs_buf_log_item *, uint, uint);
 
 /* xfs_trans_buf.c */
-xfs_buf_t *xfs_trans_buf_item_match(xfs_trans_t *, struct xfs_buftarg *,
-			struct xfs_buf_map *, int);
+struct xfs_buf *xfs_trans_buf_item_match(struct xfs_trans *,
+			struct xfs_buftarg *, struct xfs_buf_map *, int);
 
 /* local source files */
-int  xfs_mod_incore_sb(xfs_mount_t *, xfs_sb_field_t, int64_t, int);
-void xfs_trans_mod_sb(xfs_trans_t *, uint, long);
+int  xfs_mod_incore_sb(struct xfs_mount *, int, int64_t, int);
+void xfs_trans_mod_sb(struct xfs_trans *, uint, long);
 void xfs_trans_init(struct xfs_mount *);
 int  xfs_trans_roll(struct xfs_trans **, struct xfs_inode *);
 void xfs_verifier_error(struct xfs_buf *bp);
 
-#endif	/* __LIBXFS_INTERNAL_XFS_H */
+/* XXX: this is clearly a bug - a shared header needs to export this */
+/* xfs_rtalloc.c */
+int libxfs_rtfree_extent(struct xfs_trans *, xfs_rtblock_t, xfs_extlen_t);
+
+#endif	/* __LIBXFS_INTERNAL_XFS_H__ */
