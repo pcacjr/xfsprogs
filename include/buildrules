@@ -40,11 +40,11 @@ $(LTLIBRARY) : $(SUBDIRS) $(LTOBJECTS)
 
 %.lo: %.c
 	@echo "    [CC]     $@"
-	$(Q)$(LTCOMPILE) -c $<
+	$(Q)$(LTCOMPILE) -c $< -o $@
 else
 %.o: %.c
 	@echo "    [CC]     $@"
-	$(Q)$(CC) $(CFLAGS) -c $<
+	$(Q)$(CC) $(CFLAGS) -c $< -o $@
 
 endif
 

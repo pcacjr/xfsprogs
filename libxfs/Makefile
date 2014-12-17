@@ -15,14 +15,25 @@ PKGHFILES = xfs_fs.h \
 	xfs_types.h
 
 # headers with build dependencies
-HFILES = xfs.h \
+SHFILES = xfs.h \
 	init.h \
 	crc32defs.h \
-	crc32table.h \
-	xfs_dir2_priv.h \
+	crc32table.h
+
+HFILES = $(addprefix support/, $(SHFILES)) \
+	xfs_dir2_priv.h
 
 # headers installed in QA targets
-QAHFILES = xfs_alloc.h \
+SQAHFILES = libxfs_io.h \
+	xfs_arch.h \
+	xfs_btree_trace.h \
+	xfs_inode.h \
+	xfs_mount.h \
+	xfs_trace.h \
+	xfs_trans.h
+
+QAHFILES = $(addprefix support/, $(SQAHFILES)) \
+	xfs_alloc.h \
 	xfs_alloc_btree.h \
 	xfs_attr_leaf.h \
 	xfs_attr_sf.h \
@@ -46,11 +57,19 @@ QAHFILES = xfs_alloc.h \
 	xfs_shared.h \
 	xfs_trans_resv.h \
 	xfs_trans_space.h \
-	libxfs_io.h
 
-CFILES = cache.c \
+# supporting C files
+SCFILES = cache.c \
 	crc32.c \
-	init.c kmem.c logitem.c radix-tree.c rdwr.c trans.c util.c \
+	init.c \
+	kmem.c \
+	logitem.c \
+	radix-tree.c \
+	rdwr.c \
+	trans.c \
+	util.c
+
+CFILES = $(addprefix support/, $(SCFILES)) \
 	xfs_alloc.c \
 	xfs_alloc_btree.c \
 	xfs_attr.c \
@@ -78,10 +97,12 @@ CFILES = cache.c \
 	xfs_symlink_remote.c \
 	xfs_trans_resv.c
 
-CFILES += $(PKG_PLATFORM).c
-PCFILES = darwin.c freebsd.c irix.c linux.c
-LSRCFILES = $(shell echo $(PCFILES) | sed -e "s/$(PKG_PLATFORM).c//g")
-LSRCFILES += gen_crc32table.c
+CFILES += $(addprefix support/, $(PKG_PLATFORM).c)
+
+SPCFILES = darwin.c freebsd.c irix.c linux.c
+SLSRCFILES = $(shell echo $(SPCFILES) | sed -e "s/$(PKG_PLATFORM).c//g")
+SLSRCFILES += gen_crc32table.c
+LSRCFILES = $(addprefix support/, $(SLSRCFILES))
 
 #
 # Tracing flags:
@@ -92,38 +113,38 @@ LSRCFILES += gen_crc32table.c
 #
 #LCFLAGS +=
 
-FCFLAGS = -I.
+FCFLAGS = -I. -Isupport
 
 LTLIBS = $(LIBPTHREAD) $(LIBRT)
 
 # don't try linking xfs_repair with a debug libxfs.
 DEBUG = -DNDEBUG
 
-LDIRT = gen_crc32table crc32table.h crc32selftest
+LDIRT = $(addprefix support/, gen_crc32table crc32table.h crc32selftest)
 
-default: xfs crc32selftest ltdepend $(LTLIBRARY)
+default: xfs support/crc32selftest ltdepend $(LTLIBRARY)
 
-crc32table.h: gen_crc32table.c
-	@echo "    [CC]     gen_crc32table"
-	$(Q) $(CC) $(CFLAGS) -o gen_crc32table $<
+# set up include/xfs header directory
+xfs: $(addsuffix -hdrs, $(PKGHFILES) $(QAHFILES))
+
+%-hdrs:
+	$(Q)$(LN_S) -f $(PWD)/libxfs/$* $(TOPDIR)/include/xfs/$(notdir $*)
+
+support/crc32table.h: support/gen_crc32table.c
+	@echo "    [CC]     support/gen_crc32table"
+	$(Q) $(CC) $(CFLAGS) -o support/gen_crc32table $<
 	@echo "    [GENERATE] $@"
-	$(Q) ./gen_crc32table > crc32table.h
+	$(Q) support/gen_crc32table > support/crc32table.h
 
 # The selftest binary will return an error if it fails. This is made a
 # dependency of the build process so that we refuse to build the tools on broken
 # systems/architectures. Hence we make sure that xfsprogs will never use a
 # busted CRC calculation at build time and hence avoid putting bad CRCs down on
 # disk.
-crc32selftest: gen_crc32table.c crc32table.h crc32.c
+support/crc32selftest: $(addprefix support/, gen_crc32table.c crc32table.h crc32.c)
 	@echo "    [TEST]    CRC32"
-	$(Q) $(CC) $(CFLAGS) -D CRC32_SELFTEST=1 crc32.c -o $@
+	$(Q) $(CC) $(CFLAGS) -D CRC32_SELFTEST=1 support/crc32.c -o $@
 	$(Q) ./$@
-
-# set up include/xfs header directory
-xfs: $(addsuffix -hdrs, $(PKGHFILES) $(QAHFILES))
-
-%-hdrs:
-	$(Q)$(LN_S) -f $(PWD)/libxfs/$* $(TOPDIR)/include/xfs/$*
 
 include $(BUILDRULES)
 

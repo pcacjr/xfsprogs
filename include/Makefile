@@ -21,14 +21,8 @@ include $(TOPDIR)/include/builddefs
 QAHFILES = libxfs.h libxlog.h \
 	atomic.h bitops.h cache.h kmem.h list.h hlist.h parent.h radix-tree.h \
 	swab.h \
-	xfs_arch.h \
-	xfs_btree_trace.h \
-	xfs_inode.h \
 	xfs_log_recover.h \
-	xfs_metadump.h \
-	xfs_mount.h \
-	xfs_trace.h \
-	xfs_trans.h
+	xfs_metadump.h
 
 HFILES = handle.h jdm.h xqm.h xfs.h
 HFILES += $(PKG_PLATFORM).h
