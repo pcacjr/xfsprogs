@@ -15,10 +15,10 @@ PKGHFILES = xfs_fs.h \
 	xfs_types.h
 
 # headers with build dependencies
-SHFILES = xfs.h \
-	init.h \
+SHFILES = init.h \
 	crc32defs.h \
-	crc32table.h
+	crc32table.h \
+	libxfs_priv.h
 
 HFILES = $(addprefix support/, $(SHFILES)) \
 	xfs_dir2_priv.h
