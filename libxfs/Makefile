@@ -24,7 +24,8 @@ HFILES = $(addprefix support/, $(SHFILES)) \
 	xfs_dir2_priv.h
 
 # headers installed in QA targets
-SQAHFILES = libxfs_io.h \
+SQAHFILES = libxfs_api_defs.h \
+	libxfs_io.h \
 	xfs_arch.h \
 	xfs_btree_trace.h \
 	xfs_inode.h \

@@ -216,4 +216,11 @@ int	xfs_bmap_shift_extents(struct xfs_trans *tp, struct xfs_inode *ip,
 		int *done, xfs_fileoff_t *next_fsb, xfs_fsblock_t *firstblock,
 		struct xfs_bmap_free *flist, int num_exts);
 
+struct xfs_bmbt_rec_host *
+	xfs_bmap_search_extents(struct xfs_inode *ip, xfs_fileoff_t bno,
+				int fork, int *eofp, xfs_extnum_t *lastxp,
+				struct xfs_bmbt_irec *gotp,
+				struct xfs_bmbt_irec *prevp);
+
+
 #endif	/* __XFS_BMAP_H__ */
