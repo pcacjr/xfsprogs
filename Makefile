@@ -42,7 +42,7 @@ endif
 
 LIB_SUBDIRS = libxfs libxlog libxcmd libhandle libdisk
 TOOL_SUBDIRS = copy db estimate fsck fsr growfs io logprint mkfs quota \
-		mdrestore repair rtcp m4 man doc po debian
+		mdrestore repair rtcp m4 man doc po debian spaceman
 
 SUBDIRS = include $(LIB_SUBDIRS) $(TOOL_SUBDIRS)
 
@@ -63,6 +63,7 @@ io: libxcmd libhandle
 mkfs: libxfs
 quota: libxcmd
 repair: libxfs libxlog
+spaceman: libxcmd
 
 ifneq ($(ENABLE_BLKID), yes)
 mkfs: libdisk
