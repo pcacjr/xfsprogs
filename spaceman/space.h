@@ -33,5 +33,6 @@ extern int	addfile(char *, int , xfs_fsop_geom_t *, int);
 
 extern void	file_init(void);
 extern void	help_init(void);
+extern void	prealloc_init(void);
 extern void	quit_init(void);
 extern void	trim_init(void);
