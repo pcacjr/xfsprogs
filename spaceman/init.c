@@ -38,6 +38,7 @@ static void
 init_commands(void)
 {
 	file_init();
+	freesp_init();
 	help_init();
 	prealloc_init();
 	quit_init();

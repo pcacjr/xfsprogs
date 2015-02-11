@@ -7,8 +7,12 @@ include $(TOPDIR)/include/builddefs
 
 LTCOMMAND = xfs_spaceman
 HFILES = init.h space.h
-CFILES = init.c \
-	ag.c file.c prealloc.c trim.c
+CFILES = ag.c \
+	 file.c \
+	 init.c \
+	 prealloc.c \
+	 trim.c
+
 
 LLDLIBS = $(LIBXCMD)
 LTDEPENDENCIES = $(LIBXCMD)
@@ -20,6 +24,13 @@ endif
 
 ifeq ($(ENABLE_EDITLINE),yes)
 LLDLIBS += $(LIBEDITLINE) $(LIBTERMCAP)
+endif
+
+ifeq ($(HAVE_FIEMAP),yes)
+CFILES += freesp.c
+LCFLAGS += -DHAVE_FIEMAP
+else
+LSRCFILES += freesp.c
 endif
 
 default: depend $(LTCOMMAND)

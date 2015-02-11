@@ -36,3 +36,9 @@ extern void	help_init(void);
 extern void	prealloc_init(void);
 extern void	quit_init(void);
 extern void	trim_init(void);
+
+#ifdef HAVE_FIEMAP
+extern void	freesp_init(void);
+#else
+static inline void freesp_init(void) {};
+#endif
