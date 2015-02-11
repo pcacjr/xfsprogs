@@ -327,6 +327,10 @@ freesp_f(
 
 	if (!init(argc, argv))
 		return 0;
+
+	if (dumpflag)
+		printf("%8s %8s %8s\n", "agno", "agbno", "len");
+
 	for (agno = 0; agno < file->geom.agcount; agno++)  {
 		if (inaglist(agno))
 			scan_ag(agno);
