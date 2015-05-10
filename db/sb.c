@@ -335,7 +335,7 @@ do_uuid(xfs_agnumber_t agno, uuid_t *uuid)
 	}
 	/* set uuid */
 	memcpy(&tsb.sb_uuid, uuid, sizeof(uuid_t));
-	libxfs_sb_to_disk(iocur_top->data, &tsb, XFS_SB_UUID);
+	libxfs_sb_to_disk(iocur_top->data, &tsb);
 	write_cur();
 	return uuid;
 }
@@ -500,7 +500,7 @@ do_label(xfs_agnumber_t agno, char *label)
 	memset(&tsb.sb_fname, 0, sizeof(tsb.sb_fname));
 	memcpy(&tsb.sb_fname, label, len);
 	memcpy(&lbl[0], &tsb.sb_fname, sizeof(tsb.sb_fname));
-	libxfs_sb_to_disk(iocur_top->data, &tsb, XFS_SB_FNAME);
+	libxfs_sb_to_disk(iocur_top->data, &tsb);
 	write_cur();
 	return &lbl[0];
 }
@@ -581,7 +581,6 @@ static int
 do_version(xfs_agnumber_t agno, __uint16_t version, __uint32_t features)
 {
 	xfs_sb_t	tsb;
-	__int64_t	fields = 0;
 
 	if (!get_sb(agno, &tsb))
 		return 0;
@@ -595,14 +594,12 @@ do_version(xfs_agnumber_t agno, __uint16_t version, __uint32_t features)
 	if ((version & XFS_SB_VERSION_LOGV2BIT) &&
 					!xfs_sb_version_haslogv2(&tsb)) {
 		tsb.sb_logsunit = 1;
-		fields |= (1LL << XFS_SBS_LOGSUNIT);
 	}
 
 	tsb.sb_versionnum = version;
 	tsb.sb_features2 = features;
 	tsb.sb_bad_features2 = features;
-	fields |= XFS_SB_VERSIONNUM | XFS_SB_FEATURES2 | XFS_SB_BAD_FEATURES2;
-	libxfs_sb_to_disk(iocur_top->data, &tsb, fields);
+	libxfs_sb_to_disk(iocur_top->data, &tsb);
 	write_cur();
 	return 1;
 }
