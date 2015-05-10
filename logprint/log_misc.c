@@ -698,7 +698,7 @@ xlog_print_trans_inode(
     xlog_print_trans_inode_core(&dino);
     *ptr += xfs_icdinode_size(dino.di_version);
 
-    if (*i == num_ops-1 && f->ilf_size == 3)  {
+    if (*i == num_ops-1 && f->ilf_size >= 3) {
 	return 1;
     }
 
