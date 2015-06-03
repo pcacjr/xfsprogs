@@ -185,6 +185,8 @@ char	*mopts[] = {
 	"crc",
 #define M_FINOBT	1
 	"finobt",
+#define M_RMAPBT	2
+	"rmapbt",
 	NULL
 };
 
@@ -1004,6 +1006,7 @@ main(
 	int			lazy_sb_counters;
 	int			crcs_enabled;
 	int			finobt;
+	bool			rmapbt;
 
 	progname = basename(argv[0]);
 	setlocale(LC_ALL, "");
@@ -1038,6 +1041,7 @@ main(
 	lazy_sb_counters = 1;
 	crcs_enabled = 0;
 	finobt = 0;
+	rmapbt = false;
 	memset(&fsx, 0, sizeof(fsx));
 
 	memset(&xi, 0, sizeof(xi));
@@ -1539,6 +1543,14 @@ _("cannot specify both crc and ftype\n"));
 						illegal(value, "m finobt");
 					finobt = c;
 					break;
+				case M_RMAPBT:
+					if (!value || *value == '\0')
+						reqval('m', mopts, M_CRC);
+					c = atoi(value);
+					if (c < 0 || c > 1)
+						illegal(value, "m rmapbt");
+					rmapbt = c;
+					break;
 				default:
 					unknown('m', value);
 				}
@@ -1888,6 +1900,11 @@ _("32 bit Project IDs always enabled on CRC enabled filesytems\n"));
 		fprintf(stderr,
 _("warning: finobt not supported without CRC support, disabled.\n"));
 		finobt = 0;
+	}
+	if (rmapbt && !crcs_enabled) {
+		fprintf(stderr,
+_("warning: rmapbt not supported without CRC support, disabled.\n"));
+		rmapbt = 0;
 	}
 
 	if (nsflag || nlflag) {
@@ -2483,7 +2500,7 @@ _("size %s specified for log subvolume is too large, maximum is %lld blocks\n"),
 	mp->m_sectbb_log = sbp->sb_sectlog - BBSHIFT;
 
 	/*
-	 * sb_versionnum and finobt flags must be set before we use
+	 * sb_versionnum, finobt and rmapbt flags must be set before we use
 	 * XFS_PREALLOC_BLOCKS().
 	 */
 	sbp->sb_features2 = XFS_SB_VERSION2_MKFS(crcs_enabled, lazy_sb_counters,
@@ -2505,6 +2522,8 @@ _("size %s specified for log subvolume is too large, maximum is %lld blocks\n"),
 
 	if (finobt)
 		sbp->sb_features_ro_compat = XFS_SB_FEAT_RO_COMPAT_FINOBT;
+	if (rmapbt)
+		sbp->sb_features_ro_compat |= XFS_SB_FEAT_RO_COMPAT_RMAPBT;
 
 	if (loginternal) {
 		/*
@@ -2568,7 +2587,7 @@ _("size %s specified for log subvolume is too large, maximum is %lld blocks\n"),
 		printf(_(
 		   "meta-data=%-22s isize=%-6d agcount=%lld, agsize=%lld blks\n"
 		   "         =%-22s sectsz=%-5u attr=%u, projid32bit=%u\n"
-		   "         =%-22s crc=%-8u finobt=%u\n"
+		   "         =%-22s crc=%-8u finobt=%u, rmapbt=%u\n"
 		   "data     =%-22s bsize=%-6u blocks=%llu, imaxpct=%u\n"
 		   "         =%-22s sunit=%-6u swidth=%u blks\n"
 		   "naming   =version %-14u bsize=%-6u ascii-ci=%d ftype=%d\n"
@@ -2577,7 +2596,7 @@ _("size %s specified for log subvolume is too large, maximum is %lld blocks\n"),
 		   "realtime =%-22s extsz=%-6d blocks=%lld, rtextents=%lld\n"),
 			dfile, isize, (long long)agcount, (long long)agsize,
 			"", sectorsize, attrversion, !projid16bit,
-			"", crcs_enabled, finobt,
+			"", crcs_enabled, finobt, rmapbt,
 			"", blocksize, (long long)dblocks, imaxpct,
 			"", dsunit, dswidth,
 			dirversion, dirblocksize, nci, dirftype,
@@ -2748,6 +2767,12 @@ _("size %s specified for log subvolume is too large, maximum is %lld blocks\n"),
 		agf->agf_roots[XFS_BTNUM_CNTi] = cpu_to_be32(XFS_CNT_BLOCK(mp));
 		agf->agf_levels[XFS_BTNUM_BNOi] = cpu_to_be32(1);
 		agf->agf_levels[XFS_BTNUM_CNTi] = cpu_to_be32(1);
+		if (xfs_sb_version_hasrmapbt(&mp->m_sb)) {
+			agf->agf_roots[XFS_BTNUM_RMAPi] =
+						cpu_to_be32(XFS_RMAP_BLOCK(mp));
+			agf->agf_levels[XFS_BTNUM_RMAPi] = cpu_to_be32(1);
+		}
+
 		agf->agf_flfirst = 0;
 		agf->agf_fllast = cpu_to_be32(XFS_AGFL_SIZE(mp) - 1);
 		agf->agf_flcount = 0;
@@ -2935,22 +2960,83 @@ _("size %s specified for log subvolume is too large, maximum is %lld blocks\n"),
 		/*
 		 * Free INO btree root block
 		 */
-		if (!finobt)
-			continue;
+		if (finobt) {
+			buf = libxfs_getbuf(mp->m_ddev_targp,
+					XFS_AGB_TO_DADDR(mp, agno, XFS_FIBT_BLOCK(mp)),
+					bsize);
+			buf->b_ops = &xfs_inobt_buf_ops;
+			block = XFS_BUF_TO_BLOCK(buf);
+			memset(block, 0, blocksize);
+			if (xfs_sb_version_hascrc(&mp->m_sb))
+				xfs_btree_init_block(mp, buf, XFS_FIBT_CRC_MAGIC, 0, 0,
+							agno, XFS_BTREE_CRC_BLOCKS);
+			else
+				xfs_btree_init_block(mp, buf, XFS_FIBT_MAGIC, 0, 0,
+							agno, 0);
+			libxfs_writebuf(buf, LIBXFS_EXIT_ON_FAILURE);
+		}
 
-		buf = libxfs_getbuf(mp->m_ddev_targp,
-				XFS_AGB_TO_DADDR(mp, agno, XFS_FIBT_BLOCK(mp)),
+		/* RMAP btree root block */
+		if (rmapbt) {
+			struct xfs_rmap_rec	*rrec;
+
+			buf = libxfs_getbuf(mp->m_ddev_targp,
+				XFS_AGB_TO_DADDR(mp, agno, XFS_RMAP_BLOCK(mp)),
 				bsize);
-		buf->b_ops = &xfs_inobt_buf_ops;
-		block = XFS_BUF_TO_BLOCK(buf);
-		memset(block, 0, blocksize);
-		if (xfs_sb_version_hascrc(&mp->m_sb))
-			xfs_btree_init_block(mp, buf, XFS_FIBT_CRC_MAGIC, 0, 0,
+			buf->b_ops = &xfs_rmapbt_buf_ops;
+			block = XFS_BUF_TO_BLOCK(buf);
+			memset(block, 0, blocksize);
+
+			xfs_btree_init_block(mp, buf, XFS_RMAP_CRC_MAGIC, 0, 0,
 						agno, XFS_BTREE_CRC_BLOCKS);
-		else
-			xfs_btree_init_block(mp, buf, XFS_FIBT_MAGIC, 0, 0,
-						agno, 0);
-		libxfs_writebuf(buf, LIBXFS_EXIT_ON_FAILURE);
+
+			/*
+			 * mark the AG header regions as static metadata
+			 * The BNO btree block is the first block after the
+			 * headers, so it's location defines the size of region
+			 * the static metadata consumes.
+			 */
+			rrec = XFS_RMAP_REC_ADDR(block, 1);
+			rrec->rm_startblock = 0;
+			rrec->rm_blockcount = cpu_to_be32(XFS_BNO_BLOCK(mp));
+			rrec->rm_owner = cpu_to_be64(XFS_RMAP_OWN_FS);
+			be16_add_cpu(&block->bb_numrecs, 1);
+
+			/* account freespace btree root blocks */
+			rrec = XFS_RMAP_REC_ADDR(block, 2);
+			rrec->rm_startblock = cpu_to_be32(XFS_BNO_BLOCK(mp));
+			rrec->rm_blockcount = cpu_to_be32(2);
+			rrec->rm_owner = cpu_to_be64(XFS_RMAP_OWN_AG);
+			be16_add_cpu(&block->bb_numrecs, 1);
+
+			/* account inode btree root blocks */
+			rrec = XFS_RMAP_REC_ADDR(block, 3);
+			rrec->rm_startblock = cpu_to_be32(XFS_IBT_BLOCK(mp));
+			rrec->rm_blockcount = cpu_to_be32(XFS_RMAP_BLOCK(mp) -
+							XFS_IBT_BLOCK(mp));
+			rrec->rm_owner = cpu_to_be64(XFS_RMAP_OWN_INOBT);
+			be16_add_cpu(&block->bb_numrecs, 1);
+
+			/* account for rmap btree root */ 
+			rrec = XFS_RMAP_REC_ADDR(block, 4);
+			rrec->rm_startblock = cpu_to_be32(XFS_RMAP_BLOCK(mp));
+			rrec->rm_blockcount = cpu_to_be32(1);
+			rrec->rm_owner = cpu_to_be64(XFS_RMAP_OWN_AG);
+			be16_add_cpu(&block->bb_numrecs, 1);
+
+			/* account for the log space */
+			if (loginternal && agno == logagno) {
+				rrec = XFS_RMAP_REC_ADDR(block, 5);
+				rrec->rm_startblock = cpu_to_be32(
+						XFS_FSB_TO_AGBNO(mp, logstart));
+				rrec->rm_blockcount = cpu_to_be32(logblocks);
+				rrec->rm_owner = cpu_to_be64(XFS_RMAP_OWN_LOG);
+				be16_add_cpu(&block->bb_numrecs, 1);
+			}
+
+			libxfs_writebuf(buf, LIBXFS_EXIT_ON_FAILURE);
+		}
+
 	}
 
 	/*

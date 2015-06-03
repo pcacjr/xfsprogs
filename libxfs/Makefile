@@ -42,6 +42,7 @@ QAHFILES = xfs_alloc.h \
 	xfs_inode_fork.h \
 	xfs_log_format.h \
 	xfs_quota_defs.h \
+	xfs_rmap_btree.h \
 	xfs_sb.h \
 	xfs_shared.h \
 	xfs_trans_resv.h \
@@ -75,6 +76,8 @@ CFILES = cache.c \
 	xfs_ialloc_btree.c \
 	xfs_log_rlimit.c \
 	xfs_rtbitmap.c \
+	xfs_rmap.c \
+	xfs_rmap_btree.c \
 	xfs_sb.c \
 	xfs_symlink_remote.c \
 	xfs_trans_resv.c

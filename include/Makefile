@@ -30,7 +30,7 @@ QAHFILES = libxfs.h libxlog.h \
 	xfs_trace.h \
 	xfs_trans.h
 
-HFILES = handle.h jdm.h xqm.h xfs.h
+HFILES = handle.h jdm.h xqm.h xfs.h platform_defs.h
 HFILES += $(PKG_PLATFORM).h
 PHFILES = darwin.h freebsd.h irix.h linux.h gnukfreebsd.h
 DKHFILES = volume.h fstyp.h dvh.h

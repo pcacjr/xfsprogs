@@ -364,6 +364,7 @@ xfs_ialloc_ag_alloc(
 	memset(&args, 0, sizeof(args));
 	args.tp = tp;
 	args.mp = tp->t_mountp;
+	args.owner = XFS_RMAP_OWN_INODES;
 
 	/*
 	 * Locking will ensure that we don't have two callers in here
