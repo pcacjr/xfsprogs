@@ -251,7 +251,6 @@ sb_logcheck(void)
 		x.lbsize <<= (mp->m_sb.sb_logsectlog - BBSHIFT);
 
 	log.l_dev = mp->m_logdev_targp;
-	log.l_logsize = BBTOB(log.l_logBBsize);
 	log.l_logBBsize = x.logBBsize;
 	log.l_logBBstart = x.logBBstart;
 	log.l_sectBBsize  = BTOBB(x.lbsize);
