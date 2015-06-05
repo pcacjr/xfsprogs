@@ -38,62 +38,31 @@ int xlog_recover_do_trans(struct xlog *log, xlog_recover_t *t, int p)
 static void
 zero_log(xfs_mount_t *mp)
 {
-	int error;
-	struct xlog	log;
-	xfs_daddr_t head_blk, tail_blk;
+	int		dirty;
 
-	memset(&log, 0, sizeof(log));
-	x.logBBsize = XFS_FSB_TO_BB(mp, mp->m_sb.sb_logblocks);
-	x.logBBstart = XFS_FSB_TO_DADDR(mp, mp->m_sb.sb_logstart);
-	x.lbsize = BBSIZE;
-	if (xfs_sb_version_hassector(&mp->m_sb))
-		x.lbsize <<= (mp->m_sb.sb_logsectlog - BBSHIFT);
+	dirty = xlog_is_dirty(mp, &x, verbose);
 
-	log.l_dev = mp->m_logdev_targp;
-	log.l_logBBsize = x.logBBsize;
-	log.l_logBBstart = x.logBBstart;
-	log.l_sectBBsize  = BTOBB(x.lbsize);
-	log.l_mp = mp;
-	if (xfs_sb_version_hassector(&mp->m_sb)) {
-		log.l_sectbb_log = mp->m_sb.sb_logsectlog - BBSHIFT;
-		ASSERT(log.l_sectbb_log <= mp->m_sectbb_log);
-		/* for larger sector sizes, must have v2 or external log */
-		ASSERT(log.l_sectbb_log == 0 ||
-			log.l_logBBstart == 0 ||
-			xfs_sb_version_haslogv2(&mp->m_sb));
-		ASSERT(mp->m_sb.sb_logsectlog >= BBSHIFT);
-	}
-	log.l_sectbb_mask = (1 << log.l_sectbb_log) - 1;
-
-	if ((error = xlog_find_tail(&log, &head_blk, &tail_blk))) {
-		do_warn(_("zero_log: cannot find log head/tail "
-			  "(xlog_find_tail=%d), zeroing it anyway\n"),
-			error);
-	} else {
-		if (verbose) {
-			do_warn(
-	_("zero_log: head block %" PRId64 " tail block %" PRId64 "\n"),
-				head_blk, tail_blk);
-		}
-		if (head_blk != tail_blk) {
-			if (zap_log) {
-				do_warn(_(
+	if (dirty == -1)
+		do_warn(_("zero_log: cannot find log head/tail, "
+			  "zeroing it anyway\n"));
+	else if (dirty == 1) {
+		if (zap_log) {
+			do_warn(_(
 "ALERT: The filesystem has valuable metadata changes in a log which is being\n"
 "destroyed because the -L option was used.\n"));
-			} else {
-				do_warn(_(
+		} else {
+			do_warn(_(
 "ERROR: The filesystem has valuable metadata changes in a log which needs to\n"
 "be replayed.  Mount the filesystem to replay the log, and unmount it before\n"
 "re-running xfs_repair.  If you are unable to mount the filesystem, then use\n"
 "the -L option to destroy the log and attempt a repair.\n"
 "Note that destroying the log may cause corruption -- please attempt a mount\n"
 "of the filesystem before doing this.\n"));
-				exit(2);
-			}
+			exit(2);
 		}
 	}
 
-	libxfs_log_clear(log.l_dev,
+	libxfs_log_clear(mp->m_logdev_targp,
 		XFS_FSB_TO_DADDR(mp, mp->m_sb.sb_logstart),
 		(xfs_extlen_t)XFS_FSB_TO_BB(mp, mp->m_sb.sb_logblocks),
 		&mp->m_sb.sb_uuid,
