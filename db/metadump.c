@@ -1846,21 +1846,10 @@ copy_inode_chunk(
 		return 1;
 	}
 
-	push_cur();
-	set_cur(&typtab[TYP_INODE], XFS_AGB_TO_DADDR(mp, agno, agbno),
-			XFS_FSB_TO_BB(mp, mp->m_ialloc_blks),
-			DB_RING_IGN, NULL);
-	if (iocur_top->data == NULL) {
-		print_warning("cannot read inode block %u/%u", agno, agbno);
-		rval = !stop_on_read_error;
-		goto pop_out;
-	}
-
 	/*
 	 * check for basic assumptions about inode chunks, and if any
 	 * assumptions fail, don't process the inode chunk.
 	 */
-
 	if ((mp->m_sb.sb_inopblock <= XFS_INODES_PER_CHUNK && off != 0) ||
 			(mp->m_sb.sb_inopblock > XFS_INODES_PER_CHUNK &&
 					off % XFS_INODES_PER_CHUNK != 0) ||
@@ -1870,7 +1859,17 @@ copy_inode_chunk(
 		if (show_warnings)
 			print_warning("badly aligned inode (start = %llu)",
 					XFS_AGINO_TO_INO(mp, agno, agino));
-		goto skip_processing;
+		return 1;
+	}
+
+	push_cur();
+	set_cur(&typtab[TYP_INODE], XFS_AGB_TO_DADDR(mp, agno, agbno),
+			XFS_FSB_TO_BB(mp, mp->m_ialloc_blks),
+			DB_RING_IGN, NULL);
+	if (iocur_top->data == NULL) {
+		print_warning("cannot read inode block %u/%u", agno, agbno);
+		rval = !stop_on_read_error;
+		goto pop_out;
 	}
 
 	/*
@@ -1889,7 +1888,7 @@ copy_inode_chunk(
 		if (!process_inode(agno, agino + i, dip))
 			goto pop_out;
 	}
-skip_processing:
+
 	if (write_buf(iocur_top))
 		goto pop_out;
 
