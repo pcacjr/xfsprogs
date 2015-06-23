@@ -663,6 +663,8 @@ version_string(
 		strcat(s, ",FTYPE");
 	if (xfs_sb_version_hasfinobt(sbp))
 		strcat(s, ",FINOBT");
+	if (xfs_sb_version_hassparseinodes(sbp))
+		strcat(s, ",SPARSE_INODES");
 	return s;
 }
 
