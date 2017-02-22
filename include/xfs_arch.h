@@ -25,10 +25,14 @@
 #endif
 
 #ifdef __CHECKER__
-#define __bitwise		__attribute__((bitwise))
+# ifndef __bitwise
+#  define __bitwise		__attribute__((bitwise))
+# endif
 #define __force			__attribute__((force))
 #else
-#define __bitwise
+# ifndef __bitwise
+#  define __bitwise
+# endif
 #define __force
 #endif
 
