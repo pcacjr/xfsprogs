@@ -1,3 +1,21 @@
+xfsprogs-4.10.0 (6 Feb 2017)
+	- build: fix __bitwise definitions vs kernel headers (Darrick Wong)
+
+xfsprogs-4.10.0-rc1 (15 Feb 2017)
+	- build: fix cross-compile (Gwendal Grignou)
+	- remove old Irix support (Christoph Hellwig)
+	- xfs_repair: various additional checks (Darrick Wong)
+	- xfs_repair: document dirty log conditions (Darrick Wong)
+	- xfs_repair: document exit codes (Zirong Lang)
+	- xfs_io: fix building with musl (Ralph Sennhauser)
+	- xfs_io: add set_encpolicy / get_encpolicy (Eric Biggers)
+	- xfs_io: Fix command iteration (Dave Chinner)
+	- xfs_io: fix missing syncfs command  (Amir Goldstein)
+	- xfs_db: fix 'source' command when passed as a -c option (Darrick Wong)
+	- xfs_logprint: handle log operation split of inode item (Hou Tao)
+	- xfs_metadump: ignore empty attribute leaf (Eric Sandeen)
+	- libxfs: don't OOM on corrupt agcount (Darrick Wong)
+
 xfsprogs-4.9.0 (5 Jan 2017)
 	- no changes from v4.9.0-rc1
 
