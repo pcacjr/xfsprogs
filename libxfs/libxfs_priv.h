@@ -411,11 +411,12 @@ roundup_64(__uint64_t x, __uint32_t y)
 	xfs_agnumber_t __foo = ag; 			\
 	__foo = __foo; /* no set-but-unused warning */	\
 })
-#define xfs_extent_busy_trim(args,fbno,flen,bno,len) \
-do { \
-	*(bno) = (fbno); \
-	*(len) = (flen); \
-} while (0)
+#define xfs_extent_busy_trim(args,bno,len,busy_gen) 	({	\
+	unsigned __foo = *(busy_gen);				\
+	*(busy_gen) = __foo;					\
+	false;							\
+})
+#define xfs_extent_busy_flush(mp,pag,busy_gen)		(0)
 
 /* avoid unused variable warning */
 #define xfs_alloc_busy_insert(tp,ag,b,len)	({	\
