@@ -3040,7 +3040,7 @@ _("size %s specified for log subvolume is too large, maximum is %lld blocks\n"),
 		memset(block, 0, blocksize);
 		if (xfs_sb_version_hascrc(&mp->m_sb))
 			libxfs_btree_init_block(mp, buf, XFS_ABTB_CRC_MAGIC, 0, 1,
-						agno, XFS_BTREE_CRC_BLOCKS);
+						agno, 0);
 		else
 			libxfs_btree_init_block(mp, buf, XFS_ABTB_MAGIC, 0, 1,
 						agno, 0);
@@ -3095,7 +3095,7 @@ _("size %s specified for log subvolume is too large, maximum is %lld blocks\n"),
 		memset(block, 0, blocksize);
 		if (xfs_sb_version_hascrc(&mp->m_sb))
 			libxfs_btree_init_block(mp, buf, XFS_ABTC_CRC_MAGIC, 0, 1,
-						agno, XFS_BTREE_CRC_BLOCKS);
+						agno, 0);
 		else
 			libxfs_btree_init_block(mp, buf, XFS_ABTC_MAGIC, 0, 1,
 						agno, 0);
@@ -3142,7 +3142,7 @@ _("size %s specified for log subvolume is too large, maximum is %lld blocks\n"),
 			block = XFS_BUF_TO_BLOCK(buf);
 			memset(block, 0, blocksize);
 			libxfs_btree_init_block(mp, buf, XFS_REFC_CRC_MAGIC, 0,
-						0, agno, XFS_BTREE_CRC_BLOCKS);
+						0, agno, 0);
 
 			libxfs_writebuf(buf, LIBXFS_EXIT_ON_FAILURE);
 		}
@@ -3158,7 +3158,7 @@ _("size %s specified for log subvolume is too large, maximum is %lld blocks\n"),
 		memset(block, 0, blocksize);
 		if (xfs_sb_version_hascrc(&mp->m_sb))
 			libxfs_btree_init_block(mp, buf, XFS_IBT_CRC_MAGIC, 0, 0,
-						agno, XFS_BTREE_CRC_BLOCKS);
+						agno, 0);
 		else
 			libxfs_btree_init_block(mp, buf, XFS_IBT_MAGIC, 0, 0,
 						agno, 0);
@@ -3176,7 +3176,7 @@ _("size %s specified for log subvolume is too large, maximum is %lld blocks\n"),
 			memset(block, 0, blocksize);
 			if (xfs_sb_version_hascrc(&mp->m_sb))
 				libxfs_btree_init_block(mp, buf, XFS_FIBT_CRC_MAGIC, 0, 0,
-							agno, XFS_BTREE_CRC_BLOCKS);
+							agno, 0);
 			else
 				libxfs_btree_init_block(mp, buf, XFS_FIBT_MAGIC, 0, 0,
 							agno, 0);
@@ -3195,7 +3195,7 @@ _("size %s specified for log subvolume is too large, maximum is %lld blocks\n"),
 			memset(block, 0, blocksize);
 
 			libxfs_btree_init_block(mp, buf, XFS_RMAP_CRC_MAGIC, 0, 0,
-						agno, XFS_BTREE_CRC_BLOCKS);
+						agno, 0);
 
 			/*
 			 * mark the AG header regions as static metadata
