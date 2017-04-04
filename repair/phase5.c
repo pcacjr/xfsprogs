@@ -637,12 +637,12 @@ prop_freespace_cursor(xfs_mount_t *mp, xfs_agnumber_t agno,
 	xfs_alloc_ptr_t		*bt_ptr;
 	xfs_agblock_t		agbno;
 	bt_stat_level_t		*lptr;
-	__uint32_t		crc_magic;
+	xfs_btnum_t		btnum;
 
 	if (magic == XFS_ABTB_MAGIC)
-		crc_magic = XFS_ABTB_CRC_MAGIC;
+		btnum = XFS_BTNUM_BNO;
 	else
-		crc_magic = XFS_ABTC_CRC_MAGIC;
+		btnum = XFS_BTNUM_CNT;
 
 	level++;
 
@@ -694,12 +694,8 @@ prop_freespace_cursor(xfs_mount_t *mp, xfs_agnumber_t agno,
 		lptr->buf_p->b_ops = &xfs_allocbt_buf_ops;
 		bt_hdr = XFS_BUF_TO_BLOCK(lptr->buf_p);
 		memset(bt_hdr, 0, mp->m_sb.sb_blocksize);
-		if (xfs_sb_version_hascrc(&mp->m_sb))
-			libxfs_btree_init_block(mp, lptr->buf_p, crc_magic, level,
-						0, agno, 0);
-		else
-			libxfs_btree_init_block(mp, lptr->buf_p, magic, level,
-						0, agno, 0);
+		libxfs_btree_init_block(mp, lptr->buf_p, btnum, level,
+					0, agno, 0);
 
 		bt_hdr->bb_u.s.bb_leftsib = cpu_to_be32(lptr->prev_agbno);
 
@@ -743,7 +739,7 @@ build_freespace_tree(xfs_mount_t *mp, xfs_agnumber_t agno,
 	extent_tree_node_t	*ext_ptr;
 	bt_stat_level_t		*lptr;
 	xfs_extlen_t		freeblks;
-	__uint32_t		crc_magic;
+	xfs_btnum_t		btnum;
 
 #ifdef XR_BLD_FREE_TRACE
 	fprintf(stderr, "in build_freespace_tree, agno = %d\n", agno);
@@ -753,9 +749,9 @@ build_freespace_tree(xfs_mount_t *mp, xfs_agnumber_t agno,
 
 	ASSERT(level > 0);
 	if (magic == XFS_ABTB_MAGIC)
-		crc_magic = XFS_ABTB_CRC_MAGIC;
+		btnum = XFS_BTNUM_BNO;
 	else
-		crc_magic = XFS_ABTC_CRC_MAGIC;
+		btnum = XFS_BTNUM_CNT;
 
 	/*
 	 * initialize the first block on each btree level
@@ -780,12 +776,7 @@ build_freespace_tree(xfs_mount_t *mp, xfs_agnumber_t agno,
 		lptr->buf_p->b_ops = &xfs_allocbt_buf_ops;
 		bt_hdr = XFS_BUF_TO_BLOCK(lptr->buf_p);
 		memset(bt_hdr, 0, mp->m_sb.sb_blocksize);
-		if (xfs_sb_version_hascrc(&mp->m_sb))
-			libxfs_btree_init_block(mp, lptr->buf_p, crc_magic, i,
-						0, agno, 0);
-		else
-			libxfs_btree_init_block(mp, lptr->buf_p, magic, i,
-						0, agno, 0);
+		libxfs_btree_init_block(mp, lptr->buf_p, btnum, i, 0, agno, 0);
 	}
 	/*
 	 * run along leaf, setting up records.  as we have to switch
@@ -812,12 +803,7 @@ build_freespace_tree(xfs_mount_t *mp, xfs_agnumber_t agno,
 		lptr->buf_p->b_ops = &xfs_allocbt_buf_ops;
 		bt_hdr = XFS_BUF_TO_BLOCK(lptr->buf_p);
 		memset(bt_hdr, 0, mp->m_sb.sb_blocksize);
-		if (xfs_sb_version_hascrc(&mp->m_sb))
-			libxfs_btree_init_block(mp, lptr->buf_p, crc_magic, 0,
-						0, agno, 0);
-		else
-			libxfs_btree_init_block(mp, lptr->buf_p, magic, 0,
-						0, agno, 0);
+		libxfs_btree_init_block(mp, lptr->buf_p, btnum, 0, 0, agno, 0);
 
 		bt_hdr->bb_u.s.bb_leftsib = cpu_to_be32(lptr->prev_agbno);
 		bt_hdr->bb_numrecs = cpu_to_be16(lptr->num_recs_pb +
@@ -1074,13 +1060,8 @@ prop_ino_cursor(xfs_mount_t *mp, xfs_agnumber_t agno, bt_status_t *btree_curs,
 		lptr->buf_p->b_ops = &xfs_inobt_buf_ops;
 		bt_hdr = XFS_BUF_TO_BLOCK(lptr->buf_p);
 		memset(bt_hdr, 0, mp->m_sb.sb_blocksize);
-		if (xfs_sb_version_hascrc(&mp->m_sb))
-			libxfs_btree_init_block(mp, lptr->buf_p, XFS_IBT_CRC_MAGIC,
-						level, 0, agno,
-						0);
-		else
-			libxfs_btree_init_block(mp, lptr->buf_p, XFS_IBT_MAGIC,
-						level, 0, agno, 0);
+		libxfs_btree_init_block(mp, lptr->buf_p, XFS_BTNUM_INO,
+					level, 0, agno, 0);
 
 		bt_hdr->bb_u.s.bb_leftsib = cpu_to_be32(lptr->prev_agbno);
 
@@ -1177,6 +1158,14 @@ build_ino_tree(xfs_mount_t *mp, xfs_agnumber_t agno,
 	int			spmask;
 	uint64_t		sparse;
 	uint16_t		holemask;
+	xfs_btnum_t		btnum;
+
+	if (magic == XFS_IBT_CRC_MAGIC || magic == XFS_IBT_MAGIC)
+		btnum = XFS_BTNUM_INO;
+	else if (magic == XFS_FIBT_CRC_MAGIC || magic == XFS_FIBT_MAGIC)
+		btnum = XFS_BTNUM_FINO;
+	else 
+		ASSERT(0);
 
 	for (i = 0; i < level; i++)  {
 		lptr = &btree_curs->level[i];
@@ -1199,13 +1188,7 @@ build_ino_tree(xfs_mount_t *mp, xfs_agnumber_t agno,
 		lptr->buf_p->b_ops = &xfs_inobt_buf_ops;
 		bt_hdr = XFS_BUF_TO_BLOCK(lptr->buf_p);
 		memset(bt_hdr, 0, mp->m_sb.sb_blocksize);
-		if (xfs_sb_version_hascrc(&mp->m_sb))
-			libxfs_btree_init_block(mp, lptr->buf_p, magic,
-						i, 0, agno,
-						0);
-		else
-			libxfs_btree_init_block(mp, lptr->buf_p, magic,
-						i, 0, agno, 0);
+		libxfs_btree_init_block(mp, lptr->buf_p, btnum, i, 0, agno, 0);
 	}
 
 	/*
@@ -1233,12 +1216,7 @@ build_ino_tree(xfs_mount_t *mp, xfs_agnumber_t agno,
 		lptr->buf_p->b_ops = &xfs_inobt_buf_ops;
 		bt_hdr = XFS_BUF_TO_BLOCK(lptr->buf_p);
 		memset(bt_hdr, 0, mp->m_sb.sb_blocksize);
-		if (xfs_sb_version_hascrc(&mp->m_sb))
-			libxfs_btree_init_block(mp, lptr->buf_p, magic,
-						0, 0, agno, 0);
-		else
-			libxfs_btree_init_block(mp, lptr->buf_p, magic,
-						0, 0, agno, 0);
+		libxfs_btree_init_block(mp, lptr->buf_p, btnum, 0, 0, agno, 0);
 
 		bt_hdr->bb_u.s.bb_leftsib = cpu_to_be32(lptr->prev_agbno);
 		bt_hdr->bb_numrecs = cpu_to_be16(lptr->num_recs_pb +
@@ -1491,7 +1469,7 @@ prop_rmap_cursor(
 		lptr->buf_p->b_ops = &xfs_rmapbt_buf_ops;
 		bt_hdr = XFS_BUF_TO_BLOCK(lptr->buf_p);
 		memset(bt_hdr, 0, mp->m_sb.sb_blocksize);
-		libxfs_btree_init_block(mp, lptr->buf_p, XFS_RMAP_CRC_MAGIC,
+		libxfs_btree_init_block(mp, lptr->buf_p, XFS_BTNUM_RMAP,
 					level, 0, agno, 0);
 
 		bt_hdr->bb_u.s.bb_leftsib = cpu_to_be32(lptr->prev_agbno);
@@ -1603,7 +1581,7 @@ build_rmap_tree(
 		lptr->buf_p->b_ops = &xfs_rmapbt_buf_ops;
 		bt_hdr = XFS_BUF_TO_BLOCK(lptr->buf_p);
 		memset(bt_hdr, 0, mp->m_sb.sb_blocksize);
-		libxfs_btree_init_block(mp, lptr->buf_p, XFS_RMAP_CRC_MAGIC,
+		libxfs_btree_init_block(mp, lptr->buf_p, XFS_BTNUM_RMAP,
 					i, 0, agno, 0);
 	}
 
@@ -1630,7 +1608,7 @@ _("Insufficient memory to construct reverse-map cursor."));
 		lptr->buf_p->b_ops = &xfs_rmapbt_buf_ops;
 		bt_hdr = XFS_BUF_TO_BLOCK(lptr->buf_p);
 		memset(bt_hdr, 0, mp->m_sb.sb_blocksize);
-		libxfs_btree_init_block(mp, lptr->buf_p, XFS_RMAP_CRC_MAGIC,
+		libxfs_btree_init_block(mp, lptr->buf_p, XFS_BTNUM_RMAP,
 					0, 0, agno, 0);
 
 		bt_hdr->bb_u.s.bb_leftsib = cpu_to_be32(lptr->prev_agbno);
@@ -1839,7 +1817,7 @@ prop_refc_cursor(
 		lptr->buf_p->b_ops = &xfs_refcountbt_buf_ops;
 		bt_hdr = XFS_BUF_TO_BLOCK(lptr->buf_p);
 		memset(bt_hdr, 0, mp->m_sb.sb_blocksize);
-		libxfs_btree_init_block(mp, lptr->buf_p, XFS_REFC_CRC_MAGIC,
+		libxfs_btree_init_block(mp, lptr->buf_p, XFS_BTNUM_REFC,
 					level, 0, agno, 0);
 
 		bt_hdr->bb_u.s.bb_leftsib = cpu_to_be32(lptr->prev_agbno);
@@ -1906,7 +1884,7 @@ build_refcount_tree(
 		lptr->buf_p->b_ops = &xfs_refcountbt_buf_ops;
 		bt_hdr = XFS_BUF_TO_BLOCK(lptr->buf_p);
 		memset(bt_hdr, 0, mp->m_sb.sb_blocksize);
-		libxfs_btree_init_block(mp, lptr->buf_p, XFS_REFC_CRC_MAGIC,
+		libxfs_btree_init_block(mp, lptr->buf_p, XFS_BTNUM_REFC,
 					i, 0, agno, 0);
 	}
 
@@ -1933,7 +1911,7 @@ _("Insufficient memory to construct refcount cursor."));
 		lptr->buf_p->b_ops = &xfs_refcountbt_buf_ops;
 		bt_hdr = XFS_BUF_TO_BLOCK(lptr->buf_p);
 		memset(bt_hdr, 0, mp->m_sb.sb_blocksize);
-		libxfs_btree_init_block(mp, lptr->buf_p, XFS_REFC_CRC_MAGIC,
+		libxfs_btree_init_block(mp, lptr->buf_p, XFS_BTNUM_REFC,
 					0, 0, agno, 0);
 
 		bt_hdr->bb_u.s.bb_leftsib = cpu_to_be32(lptr->prev_agbno);
