@@ -36,6 +36,9 @@
 #include "xfs_ialloc.h"
 #include "xfs_alloc.h"
 #include "xfs_bit.h"
+#include "xfs_da_format.h"
+#include "xfs_da_btree.h"
+#include "xfs_dir2_priv.h"
 
 /*
  * Calculate the worst case log unit reservation for a given superblock
@@ -432,6 +435,12 @@ libxfs_iflush_int(xfs_inode_t *ip, xfs_buf_t *bp)
 	/* bump the change count on v3 inodes */
 	if (ip->i_d.di_version == 3)
 		VFS_I(ip)->i_version++;
+
+	/* Check the inline directory data. */
+	if (S_ISDIR(VFS_I(ip)->i_mode) &&
+	    ip->i_d.di_format == XFS_DINODE_FMT_LOCAL &&
+	    xfs_dir2_sf_verify(ip))
+		return -EFSCORRUPTED;
 
 	/*
 	 * Copy the dirty parts of the inode into the on-disk

@@ -209,6 +209,16 @@ xfs_iformat_fork(
 	if (error)
 		return error;
 
+	/* Check inline dir contents. */
+	if (S_ISDIR(VFS_I(ip)->i_mode) &&
+	    dip->di_format == XFS_DINODE_FMT_LOCAL) {
+		error = xfs_dir2_sf_verify(ip);
+		if (error) {
+			xfs_idestroy_fork(ip, XFS_DATA_FORK);
+			return error;
+		}
+	}
+
 	if (xfs_is_reflink_inode(ip)) {
 		ASSERT(ip->i_cowfp == NULL);
 		xfs_ifork_init_cow(ip);
@@ -319,8 +329,6 @@ xfs_iformat_local(
 	int		whichfork,
 	int		size)
 {
-	int		error;
-
 	/*
 	 * If the size is unreasonable, then something
 	 * is wrong and we just bail out rather than crash in
@@ -334,14 +342,6 @@ xfs_iformat_local(
 		XFS_CORRUPTION_ERROR("xfs_iformat_local", XFS_ERRLEVEL_LOW,
 				     ip->i_mount, dip);
 		return -EFSCORRUPTED;
-	}
-
-	if (S_ISDIR(VFS_I(ip)->i_mode) && whichfork == XFS_DATA_FORK) {
-		error = xfs_dir2_sf_verify(ip->i_mount,
-				(struct xfs_dir2_sf_hdr *)XFS_DFORK_DPTR(dip),
-				size);
-		if (error)
-			return error;
 	}
 
 	xfs_init_local_fork(ip, whichfork, XFS_DFORK_PTR(dip, whichfork), size);
@@ -864,7 +864,7 @@ xfs_iextents_copy(
  * In these cases, the format always takes precedence, because the
  * format indicates the current state of the fork.
  */
-int
+void
 xfs_iflush_fork(
 	xfs_inode_t		*ip,
 	xfs_dinode_t		*dip,
@@ -874,7 +874,6 @@ xfs_iflush_fork(
 	char			*cp;
 	xfs_ifork_t		*ifp;
 	xfs_mount_t		*mp;
-	int			error;
 	static const short	brootflag[2] =
 		{ XFS_ILOG_DBROOT, XFS_ILOG_ABROOT };
 	static const short	dataflag[2] =
@@ -883,7 +882,7 @@ xfs_iflush_fork(
 		{ XFS_ILOG_DEXT, XFS_ILOG_AEXT };
 
 	if (!iip)
-		return 0;
+		return;
 	ifp = XFS_IFORK_PTR(ip, whichfork);
 	/*
 	 * This can happen if we gave up in iformat in an error path,
@@ -891,19 +890,12 @@ xfs_iflush_fork(
 	 */
 	if (!ifp) {
 		ASSERT(whichfork == XFS_ATTR_FORK);
-		return 0;
+		return;
 	}
 	cp = XFS_DFORK_PTR(dip, whichfork);
 	mp = ip->i_mount;
 	switch (XFS_IFORK_FORMAT(ip, whichfork)) {
 	case XFS_DINODE_FMT_LOCAL:
-		if (S_ISDIR(VFS_I(ip)->i_mode) && whichfork == XFS_DATA_FORK) {
-			error = xfs_dir2_sf_verify(mp,
-					(struct xfs_dir2_sf_hdr *)ifp->if_u1.if_data,
-					ifp->if_bytes);
-			if (error)
-				return error;
-		}
 		if ((iip->ili_fields & dataflag[whichfork]) &&
 		    (ifp->if_bytes > 0)) {
 			ASSERT(ifp->if_u1.if_data != NULL);
@@ -956,7 +948,6 @@ xfs_iflush_fork(
 		ASSERT(0);
 		break;
 	}
-	return 0;
 }
 
 /*
