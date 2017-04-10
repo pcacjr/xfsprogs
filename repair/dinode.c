@@ -1385,6 +1385,11 @@ process_symlink(
 		return(1);
 	}
 
+	if (be64_to_cpu(dino->di_size) == 0) {
+		do_warn(_("zero size symlink in inode %" PRIu64 "\n"), lino);
+		return 1;
+	}
+
 	/*
 	 * have to check symlink component by component.
 	 * get symlink contents into data area
