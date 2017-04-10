@@ -419,7 +419,7 @@ roundup_64(__uint64_t x, __uint32_t y)
 	*(busy_gen) = __foo;					\
 	false;							\
 })
-#define xfs_extent_busy_flush(mp,pag,busy_gen)		(0)
+#define xfs_extent_busy_flush(mp,pag,busy_gen)		((void)(0))
 
 /* avoid unused variable warning */
 #define xfs_alloc_busy_insert(tp,ag,b,len)	({	\
