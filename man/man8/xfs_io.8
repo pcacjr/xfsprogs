@@ -872,13 +872,15 @@ Only available in expert mode and requires privileges.
 Force the filesystem to shutdown (with or without flushing the log).
 Only available in expert mode and requires privileges.
 .TP
-.BR stat " [ " \-v " ]"
+.BR stat " [ " \-v "|" \-r " ]"
 Selected statistics from
 .BR stat (2)
 and the XFS_IOC_GETXATTR system call on the current file. If the
 .B \-v
 option is specified, the atime (last access), mtime
-(last modify), and ctime (last change) timestamps are also displayed.
+(last modify), and ctime (last change) timestamps are also displayed.  The
+.B \-r
+option dumps raw fields from the stat structure.
 .TP
 .B statfs
 Selected statistics from

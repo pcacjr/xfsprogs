@@ -59,16 +59,32 @@ filetype(mode_t mode)
 	return NULL;
 }
 
-int
-stat_f(
-	int		argc,
-	char		**argv)
+static int
+dump_raw_stat(struct stat *st)
 {
-	struct dioattr	dio;
-	struct fsxattr	fsx, fsxa;
-	struct stat	st;
-	int		verbose = (argc == 2 && !strcmp(argv[1], "-v"));
+	printf("stat.blksize = %lu\n", st->st_blksize);
+	printf("stat.nlink = %lu\n", st->st_nlink);
+	printf("stat.uid = %u\n", st->st_uid);
+	printf("stat.gid = %u\n", st->st_gid);
+	printf("stat.mode: 0%o\n", st->st_mode);
+	printf("stat.ino = %lu\n", st->st_ino);
+	printf("stat.size = %lu\n", st->st_size);
+	printf("stat.blocks = %lu\n", st->st_blocks);
+	printf("stat.atime.tv_sec = %ld\n", st->st_atim.tv_sec);
+	printf("stat.atime.tv_nsec = %ld\n", st->st_atim.tv_nsec);
+	printf("stat.ctime.tv_sec = %ld\n", st->st_ctim.tv_sec);
+	printf("stat.ctime.tv_nsec = %ld\n", st->st_ctim.tv_nsec);
+	printf("stat.mtime.tv_sec = %ld\n", st->st_mtim.tv_sec);
+	printf("stat.mtime.tv_nsec = %ld\n", st->st_mtim.tv_nsec);
+	printf("stat.rdev_major = %u\n", major(st->st_rdev));
+	printf("stat.rdev_minor = %u\n", minor(st->st_rdev));
+	printf("stat.dev_major = %u\n", major(st->st_dev));
+	printf("stat.dev_minor = %u\n", minor(st->st_dev));
+	return 0;
+}
 
+void print_file_info(void)
+{
 	printf(_("fd.path = \"%s\"\n"), file->name);
 	printf(_("fd.flags = %s,%s,%s%s%s%s%s\n"),
 		file->flags & IO_OSYNC ? _("sync") : _("non-sync"),
@@ -78,21 +94,13 @@ stat_f(
 		file->flags & IO_APPEND ? _(",append-only") : "",
 		file->flags & IO_NONBLOCK ? _(",non-block") : "",
 		file->flags & IO_TMPFILE ? _(",tmpfile") : "");
-	if (fstat(file->fd, &st) < 0) {
-		perror("fstat");
-	} else {
-		printf(_("stat.ino = %lld\n"), (long long)st.st_ino);
-		printf(_("stat.type = %s\n"), filetype(st.st_mode));
-		printf(_("stat.size = %lld\n"), (long long)st.st_size);
-		printf(_("stat.blocks = %lld\n"), (long long)st.st_blocks);
-		if (verbose) {
-			printf(_("stat.atime = %s"), ctime(&st.st_atime));
-			printf(_("stat.mtime = %s"), ctime(&st.st_mtime));
-			printf(_("stat.ctime = %s"), ctime(&st.st_ctime));
-		}
-	}
-	if (file->flags & IO_FOREIGN)
-		return 0;
+}
+
+void print_xfs_info(int verbose)
+{
+	struct dioattr	dio;
+	struct fsxattr	fsx, fsxa;
+
 	if ((xfsctl(file->name, file->fd, FS_IOC_FSGETXATTR, &fsx)) < 0 ||
 	    (xfsctl(file->name, file->fd, XFS_IOC_FSGETXATTRA, &fsxa)) < 0) {
 		perror("FS_IOC_FSGETXATTR");
@@ -112,6 +120,57 @@ stat_f(
 		printf(_("dioattr.miniosz = %u\n"), dio.d_miniosz);
 		printf(_("dioattr.maxiosz = %u\n"), dio.d_maxiosz);
 	}
+}
+
+int
+stat_f(
+	int		argc,
+	char		**argv)
+{
+	struct stat	st;
+	int		c, verbose = 0, raw = 0;
+
+	while ((c = getopt(argc, argv, "rv")) != EOF) {
+		switch (c) {
+		case 'r':
+			raw = 1;
+			break;
+		case 'v':
+			verbose = 1;
+			break;
+		default:
+			return command_usage(&stat_cmd);
+		}
+	}
+
+	if (raw && verbose)
+		return command_usage(&stat_cmd);
+
+	if (fstat(file->fd, &st) < 0) {
+		perror("fstat");
+		return 0;
+	}
+
+	if (raw)
+		return dump_raw_stat(&st);
+
+	print_file_info();
+
+	printf(_("stat.ino = %lld\n"), (long long)st.st_ino);
+	printf(_("stat.type = %s\n"), filetype(st.st_mode));
+	printf(_("stat.size = %lld\n"), (long long)st.st_size);
+	printf(_("stat.blocks = %lld\n"), (long long)st.st_blocks);
+	if (verbose) {
+		printf(_("stat.atime = %s"), ctime(&st.st_atime));
+		printf(_("stat.mtime = %s"), ctime(&st.st_mtime));
+		printf(_("stat.ctime = %s"), ctime(&st.st_ctime));
+	}
+
+	if (file->flags & IO_FOREIGN)
+		return 0;
+
+	print_xfs_info(verbose);
+
 	return 0;
 }
 
@@ -175,7 +234,7 @@ stat_init(void)
 	stat_cmd.argmin = 0;
 	stat_cmd.argmax = 1;
 	stat_cmd.flags = CMD_NOMAP_OK | CMD_FOREIGN_OK;
-	stat_cmd.args = _("[-v]");
+	stat_cmd.args = _("[-v|-r]");
 	stat_cmd.oneline = _("statistics on the currently open file");
 
 	statfs_cmd.name = "statfs";
