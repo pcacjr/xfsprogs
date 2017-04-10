@@ -86,6 +86,7 @@ init_commands(void)
 	seek_init();
 	sendfile_init();
 	shutdown_init();
+	stat_init();
 	sync_init();
 	sync_range_init();
 	truncate_init();

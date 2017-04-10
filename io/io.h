@@ -53,7 +53,7 @@ extern fileio_t		*filetable;	/* open file table */
 extern int		filecount;	/* number of open files */
 extern fileio_t		*file;		/* active file in file table */
 extern int filelist_f(void);
-
+extern int stat_f(int argc, char **argv);
 /*
  * Memory mapped file regions
  */
@@ -112,6 +112,7 @@ extern void		pwrite_init(void);
 extern void		quit_init(void);
 extern void		seek_init(void);
 extern void		shutdown_init(void);
+extern void		stat_init(void);
 extern void		sync_init(void);
 extern void		truncate_init(void);
 extern void		utimes_init(void);
