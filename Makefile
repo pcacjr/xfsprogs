@@ -101,7 +101,7 @@ endif
 # versions will copy those files anyway, and don't understand -i.
 LIBTOOLIZE_INSTALL = `$(LIBTOOLIZE_BIN) -n -i >/dev/null 2>/dev/null && echo -i`
 
-configure:
+configure: configure.ac
 	$(LIBTOOLIZE_BIN) -c $(LIBTOOLIZE_INSTALL) -f
 	cp include/install-sh .
 	aclocal -I m4
