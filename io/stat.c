@@ -2,6 +2,9 @@
  * Copyright (c) 2003-2005 Silicon Graphics, Inc.
  * All Rights Reserved.
  *
+ * Copyright (C) 2015, 2017 Red Hat, Inc.
+ * Portions of statx support written by David Howells (dhowells@redhat.com)
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
  * published by the Free Software Foundation.
@@ -20,10 +23,14 @@
 #include "input.h"
 #include "init.h"
 #include "io.h"
+#include "statx.h"
 #include "libxfs.h"
+
+#include <fcntl.h>
 
 static cmdinfo_t stat_cmd;
 static cmdinfo_t statfs_cmd;
+static cmdinfo_t statx_cmd;
 
 off64_t
 filesize(void)
@@ -226,6 +233,155 @@ statfs_f(
 	return 0;
 }
 
+static ssize_t
+_statx(
+	int		dfd,
+	const char	*filename,
+	unsigned int	flags,
+	unsigned int	mask,
+	struct statx	*buffer)
+{
+#ifdef __NR_statx
+	return syscall(__NR_statx, dfd, filename, flags, mask, buffer);
+#else
+	errno = ENOSYS;
+	return -1;
+#endif
+}
+
+static void
+statx_help(void)
+{
+        printf(_(
+"\n"
+" Display extended file status.\n"
+"\n"
+" Options:\n"
+" -v -- More verbose output\n"
+" -r -- Print raw statx structure fields\n"
+" -m mask -- Specify the field mask for the statx call\n"
+"            (can also be 'basic' or 'all'; default STATX_ALL)\n"
+" -D -- Don't sync attributes with the server\n"
+" -F -- Force the attributes to be sync'd with the server\n"
+"\n"));
+}
+
+/* statx helper */
+static int
+dump_raw_statx(struct statx *stx)
+{
+	printf("stat.mask = 0x%x\n", stx->stx_mask);
+	printf("stat.blksize = %u\n", stx->stx_blksize);
+	printf("stat.attributes = 0x%llx\n", stx->stx_attributes);
+	printf("stat.nlink = %u\n", stx->stx_nlink);
+	printf("stat.uid = %u\n", stx->stx_uid);
+	printf("stat.gid = %u\n", stx->stx_gid);
+	printf("stat.mode: 0%o\n", stx->stx_mode);
+	printf("stat.ino = %llu\n", stx->stx_ino);
+	printf("stat.size = %llu\n", stx->stx_size);
+	printf("stat.blocks = %llu\n", stx->stx_blocks);
+	printf("stat.atime.tv_sec = %lld\n", stx->stx_atime.tv_sec);
+	printf("stat.atime.tv_nsec = %d\n", stx->stx_atime.tv_nsec);
+	printf("stat.btime.tv_sec = %lld\n", stx->stx_btime.tv_sec);
+	printf("stat.btime.tv_nsec = %d\n", stx->stx_btime.tv_nsec);
+	printf("stat.ctime.tv_sec = %lld\n", stx->stx_ctime.tv_sec);
+	printf("stat.ctime.tv_nsec = %d\n", stx->stx_ctime.tv_nsec);
+	printf("stat.mtime.tv_sec = %lld\n", stx->stx_mtime.tv_sec);
+	printf("stat.mtime.tv_nsec = %d\n", stx->stx_mtime.tv_nsec);
+	printf("stat.rdev_major = %u\n", stx->stx_rdev_major);
+	printf("stat.rdev_minor = %u\n", stx->stx_rdev_minor);
+	printf("stat.dev_major = %u\n", stx->stx_dev_major);
+	printf("stat.dev_minor = %u\n", stx->stx_dev_minor);
+	return 0;
+}
+
+/*
+ * options:
+ * 	- input flags - query type
+ * 	- output style for flags (and all else?) (chars vs. hex?)
+ * 	- output - mask out incidental flag or not?
+ */
+int
+statx_f(
+	int		argc,
+	char		**argv)
+{
+	int		c, verbose = 0, raw = 0;
+	char		*p;
+	struct statx	stx;
+	int		atflag = 0;
+	unsigned int	mask = STATX_ALL;
+
+	while ((c = getopt(argc, argv, "m:rvFD")) != EOF) {
+		switch (c) {
+		case 'm':
+			if (strcmp(optarg, "basic") == 0)
+				mask = STATX_BASIC_STATS;
+			else if (strcmp(optarg, "all") == 0)
+				mask = STATX_ALL;
+			else {
+				mask = strtoul(optarg, &p, 0);
+				if (!p || p == optarg) {
+					printf(
+				_("non-numeric mask -- %s\n"), optarg);
+					return 0;
+				}
+			}
+			break;
+		case 'r':
+			raw = 1;
+			break;
+		case 'v':
+			verbose = 1;
+			break;
+		case 'F':
+			atflag &= ~AT_STATX_SYNC_TYPE;
+			atflag |= AT_STATX_FORCE_SYNC;
+			break;
+		case 'D':
+			atflag &= ~AT_STATX_SYNC_TYPE;
+			atflag |= AT_STATX_DONT_SYNC;
+			break;
+		default:
+			return command_usage(&statx_cmd);
+		}
+	}
+
+	if (raw && verbose)
+		return command_usage(&statx_cmd);
+
+	memset(&stx, 0xbf, sizeof(stx));
+	if (_statx(file->fd, NULL, atflag, mask, &stx) < 0) {
+		perror("statx");
+		return 0;
+	}
+
+	if (raw)
+		return dump_raw_statx(&stx);
+
+	print_file_info();
+
+	printf(_("stat.ino = %lld\n"), (long long)stx.stx_ino);
+	printf(_("stat.type = %s\n"), filetype(stx.stx_mode));
+	printf(_("stat.size = %lld\n"), (long long)stx.stx_size);
+	printf(_("stat.blocks = %lld\n"), (long long)stx.stx_blocks);
+	if (verbose) {
+		printf(_("stat.atime = %s"), ctime((time_t *)&stx.stx_atime.tv_sec));
+		printf(_("stat.mtime = %s"), ctime((time_t *)&stx.stx_mtime.tv_sec));
+		printf(_("stat.ctime = %s"), ctime((time_t *)&stx.stx_ctime.tv_sec));
+		if (stx.stx_mask & STATX_BTIME)
+			printf(_("stat.btime = %s"),
+				ctime((time_t *)&stx.stx_btime.tv_sec));
+	}
+
+	if (file->flags & IO_FOREIGN)
+		return 0;
+
+	print_xfs_info(verbose);
+
+	return 0;
+}
+
 void
 stat_init(void)
 {
@@ -237,6 +393,15 @@ stat_init(void)
 	stat_cmd.args = _("[-v|-r]");
 	stat_cmd.oneline = _("statistics on the currently open file");
 
+	statx_cmd.name = "statx";
+	statx_cmd.cfunc = statx_f;
+	statx_cmd.argmin = 0;
+	statx_cmd.argmax = -1;
+	statx_cmd.flags = CMD_NOMAP_OK | CMD_FOREIGN_OK;
+	statx_cmd.args = _("[-v|-r][-m basic | -m all | -m <mask>][-FD]");
+	statx_cmd.oneline = _("extended statistics on the currently open file");
+	statx_cmd.help = statx_help;
+
 	statfs_cmd.name = "statfs";
 	statfs_cmd.cfunc = statfs_f;
 	statfs_cmd.flags = CMD_NOMAP_OK | CMD_FOREIGN_OK;
@@ -244,5 +409,6 @@ stat_init(void)
 		_("statistics on the filesystem of the currently open file");
 
 	add_command(&stat_cmd);
+	add_command(&statx_cmd);
 	add_command(&statfs_cmd);
 }

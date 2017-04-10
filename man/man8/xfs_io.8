@@ -882,6 +882,36 @@ option is specified, the atime (last access), mtime
 .B \-r
 option dumps raw fields from the stat structure.
 .TP
+.BI "statx [ \-v|\-r ][ \-m " basic " | \-m " all " | -m " <mask> " ][ \-FD ]"
+Selected statistics from
+.BR stat (2)
+and the XFS_IOC_GETXATTR system call on the current file.
+.RS 1.0i
+.PD 0
+.TP 0.4i
+.B \-v
+Show timestamps.
+.TP
+.B \-r
+Dump raw statx structure values.
+.TP
+.B \-m basic
+Set the field mask for the statx call to STATX_BASIC_STATS.
+.TP
+.B \-m all
+Set the the field mask for the statx call to STATX_ALL (default).
+.TP
+.B \-m <mask>
+Specify a numeric field mask for the statx call.
+.TP
+.B \-F
+Force the attributes to be synced with the server.
+.TP
+.B \-D
+Don't sync attributes with the server.
+.PD
+.RE
+.TP
 .B statfs
 Selected statistics from
 .BR statfs (2)
