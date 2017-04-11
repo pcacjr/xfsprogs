@@ -1,3 +1,11 @@
+xfsprogs-4.11.0-rc1 (4 Apr 2017)
+	- xfs_io: add statx support (David Howells, Eric Sandeen)
+	- xfs_io: fix "falloc -p" to pass KEEP_SIZE (Calvin Owens)
+	- xfs_io: support shutdown on foreign filesystems (Darrick Wong)
+	- xfs_repair: repair zero-sized symlinks (Brian Foster)
+	- xfs_repair: warn about dirty log with -n option (Eric Sandeen)
+	- xfs.5: document barrier mount option deprecation (Eric Sandeen)
+
 xfsprogs-4.10.0 (6 Feb 2017)
 	- build: fix __bitwise definitions vs kernel headers (Darrick Wong)
 
