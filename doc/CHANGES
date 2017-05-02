@@ -1,3 +1,9 @@
+xfsprogs-4.11.0-rc2 (2 May 2017)
+	- xfs_db: add btree dumping command (Darrick Wong)
+	- mkfs.xfs: change bare -m rmapbt,reflink to enable (Eric Sandeen)
+	- xfs_io: document -d option, enable for dqblks & inodes (Darrick Wong)
+	- xfs_io: minor statx fixes, updates (Chandan Rajendra, Gwendal Grignou)
+
 xfsprogs-4.11.0-rc1 (4 Apr 2017)
 	- xfs_io: add statx support (David Howells, Eric Sandeen)
 	- xfs_io: fix "falloc -p" to pass KEEP_SIZE (Calvin Owens)
