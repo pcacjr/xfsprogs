@@ -4,6 +4,10 @@
 #include <unistd.h>
 #include <sys/syscall.h>
 
+#ifndef AT_EMPTY_PATH
+#define AT_EMPTY_PATH	0x1000
+#endif
+
 #ifndef AT_STATX_SYNC_TYPE
 #define AT_STATX_SYNC_TYPE      0x6000  /* Type of synchronisation required from statx() */
 #define AT_STATX_SYNC_AS_STAT   0x0000  /* - Do whatever stat() does */
