@@ -124,6 +124,7 @@ init_commands(void)
 	attrset_init();
 	block_init();
 	bmap_init();
+	btdump_init();
 	check_init();
 	convert_init();
 	crc_init();

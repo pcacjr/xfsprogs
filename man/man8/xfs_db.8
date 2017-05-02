@@ -332,6 +332,19 @@ and
 options are used to select the attribute or data
 area of the inode, if neither option is given then both areas are shown.
 .TP
+.B btdump [-a] [-i]
+If the cursor points to a btree node, dump the btree from that block downward.
+If instead the cursor points to an inode, dump the data fork block mapping btree if there is one.
+By default, only records stored in the btree are dumped.
+.RS 1.0i
+.TP 0.4i
+.B \-a
+If the cursor points at an inode, dump the extended attribute block mapping btree, if present.
+.TP
+.B \-i
+Dump all keys and pointers in intermediate btree nodes, and all records in leaf btree nodes.
+.RE
+.TP
 .B check
 See the
 .B blockget
