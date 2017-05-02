@@ -476,6 +476,17 @@ xfs_verify_recalc_inode_crc(
 }
 
 void
+xfs_verify_recalc_dquot_crc(
+	struct xfs_buf *bp)
+{
+	ASSERT((iocur_top->dquot_buf));
+	ASSERT(iocur_top->bp == bp);
+
+	xfs_update_cksum(iocur_top->data, sizeof(struct xfs_dqblk),
+			 XFS_DQUOT_CRC_OFF);
+}
+
+void
 xfs_verify_recalc_crc(
 	struct xfs_buf *bp)
 {

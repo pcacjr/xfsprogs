@@ -65,6 +65,7 @@ extern void     ring_add(void);
 extern void	set_iocur_type(const struct typ *t);
 extern void	xfs_dummy_verify(struct xfs_buf *bp);
 extern void	xfs_verify_recalc_inode_crc(struct xfs_buf *bp);
+extern void	xfs_verify_recalc_dquot_crc(struct xfs_buf *bp);
 extern void	xfs_verify_recalc_crc(struct xfs_buf *bp);
 
 /*
