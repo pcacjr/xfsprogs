@@ -16,7 +16,7 @@
 #endif
 
 #ifndef __NR_statx
-# ifdef __i386__
+# if defined(__i386__) || defined(__powerpc__)
 #  define __NR_statx 383
 # elif defined (__x86_64__)
 #  if defined (__ILP32__)
