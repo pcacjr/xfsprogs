@@ -955,6 +955,31 @@ verbose output will be printed.
 .RE
 .IP
 .B [NOTE: Not currently operational on Linux.]
+.RE
+.PD
+.TP
+.BI "inode  [ [ -n ] " number " ] [ -v ]"
+The inode command queries physical information about an inode. With
+no arguments, it will return 1 or 0, indicating whether or not any
+inode numbers greater than 32 bits are currently in use in the filesystem.
+If given an inode
+.I number
+as an argument, the command will return the same inode
+.I number
+if it is in use, or 0 if not. With
+.BI \-n " number"
+, the next used inode number after this
+.I number
+will be returned, or zero if the supplied inode number is the highest one
+in use. With
+.B \-v
+the command will also report the number of bits (32 or 64) used by the
+inode
+.I number
+printed in the result; if no inode
+.I number
+was specified on the command line, the maximum possible inode number in
+the system will be printed along with its size.
 .PD
 .TP
 .BI "set_encpolicy [ \-c " mode " ] [ \-n " mode " ] [ \-f " flags " ] [ \-v " version " ] [ " keydesc " ]
