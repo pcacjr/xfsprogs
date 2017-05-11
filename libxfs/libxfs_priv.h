@@ -480,6 +480,16 @@ void xfs_verifier_error(struct xfs_buf *bp);
 /* xfs_rtalloc.c */
 int libxfs_rtfree_extent(struct xfs_trans *, xfs_rtblock_t, xfs_extlen_t);
 
+struct xfs_rtalloc_rec {
+	xfs_rtblock_t		ar_startblock;
+	xfs_rtblock_t		ar_blockcount;
+};
+
+typedef int (*xfs_rtalloc_query_range_fn)(
+	struct xfs_trans	*tp,
+	struct xfs_rtalloc_rec	*rec,
+	void			*priv);
+
 int libxfs_zero_extent(struct xfs_inode *ip, xfs_fsblock_t start_fsb,
                         xfs_off_t count_fsb);
 
