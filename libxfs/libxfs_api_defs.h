@@ -32,6 +32,7 @@
 #define xfs_fs_cmn_err			libxfs_fs_cmn_err
 
 #define xfs_trans_alloc			libxfs_trans_alloc
+#define xfs_trans_alloc_empty		libxfs_trans_alloc_empty
 #define xfs_trans_add_item		libxfs_trans_add_item
 #define xfs_trans_bhold			libxfs_trans_bhold
 #define xfs_trans_binval		libxfs_trans_binval
