@@ -206,7 +206,7 @@ libxfs_trans_alloc(
  * without any dirty data.
  */
 int
-xfs_trans_alloc_empty(
+libxfs_trans_alloc_empty(
 	struct xfs_mount		*mp,
 	struct xfs_trans		**tpp)
 {
