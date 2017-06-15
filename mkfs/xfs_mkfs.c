@@ -18,9 +18,6 @@
 
 #include "libxfs.h"
 #include <ctype.h>
-#ifdef ENABLE_BLKID
-#  include <blkid/blkid.h>
-#endif /* ENABLE_BLKID */
 #include "xfs_multidisk.h"
 #include "libxcmd.h"
 
