@@ -49,37 +49,9 @@ static struct xfs_ag_rmap *ag_rmaps;
 static bool rmapbt_suspect;
 static bool refcbt_suspect;
 
-/*
- * Compare rmap observations for array sorting.
- */
-static int
-rmap_compare(
-	const void		*a,
-	const void		*b)
+static inline int rmap_compare(const void *a, const void *b)
 {
-	const struct xfs_rmap_irec	*pa;
-	const struct xfs_rmap_irec	*pb;
-	__u64			oa;
-	__u64			ob;
-
-	pa = a; pb = b;
-	oa = libxfs_rmap_irec_offset_pack(pa);
-	ob = libxfs_rmap_irec_offset_pack(pb);
-
-	if (pa->rm_startblock < pb->rm_startblock)
-		return -1;
-	else if (pa->rm_startblock > pb->rm_startblock)
-		return 1;
-	else if (pa->rm_owner < pb->rm_owner)
-		return -1;
-	else if (pa->rm_owner > pb->rm_owner)
-		return 1;
-	else if (oa < ob)
-		return -1;
-	else if (oa > ob)
-		return 1;
-	else
-		return 0;
+	return libxfs_rmap_compare(a, b);
 }
 
 /*
