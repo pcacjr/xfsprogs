@@ -301,6 +301,105 @@ ioctl.  Options behave as described in the
 .BR xfs_bmap (8)
 manual page.
 .TP
+.BI "fsmap [ \-d | \-l | \-r ] [ \-m | \-v ] [ \-n " nx " ] [ " start " ] [ " end " ]
+Prints the mapping of disk blocks used by the filesystem hosting the current
+file.  The map lists each extent used by files, allocation group metadata,
+journalling logs, and static filesystem metadata, as well as any
+regions that are unused.
+Each line of the listings takes the following form:
+.PP
+.RS
+.IR extent ": " major ":" minor " [" startblock .. endblock "]: " owner " " startoffset .. endoffset " " length
+.PP
+Static filesystem metadata, allocation group metadata, btrees,
+journalling logs, and free space are marked by replacing the
+.IR startoffset .. endoffset
+with the appropriate marker.
+All blocks, offsets, and lengths are specified in units of 512-byte
+blocks, no matter what the filesystem's block size is.
+The optional
+.I start
+and
+.I end
+arguments can be used to constrain the output to a particular range of
+disk blocks.
+.RE
+.RS 1.0i
+.PD 0
+.TP
+.BI \-d
+Display only extents from the data device.
+This option only applies for XFS filesystems.
+.TP
+.BI \-l
+Display only extents from the external log device.
+This option only applies to XFS filesystems.
+.TP
+.BI \-r
+Display only extents from the realtime device.
+This option only applies to XFS filesystems.
+.TP
+.BI \-m
+Display results in a machine readable format (CSV).
+This option is not compatible with the
+.B \-v
+flag.
+The columns of the output are: extent number, device major, device minor,
+physical start, physical end, owner, offset start, offset end, length.
+The start, end, and length numbers are provided in units of 512b.
+The owner field is a special string that takes the form:
+
+.RS 1.0i
+.PD 0
+.TP 0.4i
+.I inode_%lld_data
+for inode data.
+.TP
+.I inode_%lld_data_bmbt
+for inode data extent maps.
+.TP
+.I inode_%lld_attr
+for inode extended attribute data.
+.TP
+.I inode_%lld_attr_bmbt
+for inode extended attribute extent maps.
+.TP
+.I special_%u:%u
+for other filesystem metadata.
+.PD
+.RE
+
+.TP
+.BI \-n " num_extents"
+If this option is given,
+.B xfs_fsmap
+obtains the extent list of the file in groups of
+.I num_extents
+extents.
+In the absence of
+.BR \-n ", " xfs_fsmap
+queries the system for extents in groups of 131,072 records.
+.TP
+.B \-v
+Shows verbose information.
+When this flag is specified, additional AG specific information is
+appended to each line in the following form:
+.IP
+.RS 1.2i
+.IR agno " (" startagblock .. endagblock ") " nblocks " " flags
+.RE
+.IP
+A second
+.B \-v
+option will print out the
+.I flags
+legend.
+This option is not compatible with the
+.B \-m
+flag.
+.RE
+.PD
+.TP
 .BI "extsize [ \-R | \-D ] [ " value " ]"
 Display and/or modify the preferred extent size used when allocating
 space for the currently open file. If the

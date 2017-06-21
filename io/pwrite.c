@@ -357,7 +357,7 @@ pwrite_f(
 		return 0;
 
 	c = IO_READONLY | (dflag ? IO_DIRECT : 0);
-	if (infile && ((fd = openfile(infile, NULL, c, 0)) < 0))
+	if (infile && ((fd = openfile(infile, NULL, c, 0, NULL)) < 0))
 		return 0;
 
 	gettimeofday(&t1, NULL);

@@ -20,6 +20,7 @@
 #include "platform_defs.h"
 #include "command.h"
 #include "init.h"
+#include "path.h"
 #include "io.h"
 
 #ifndef ARRAY_SIZE

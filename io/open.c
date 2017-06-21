@@ -52,8 +52,10 @@ openfile(
 	char		*path,
 	xfs_fsop_geom_t	*geom,
 	int		flags,
-	mode_t		mode)
+	mode_t		mode,
+	struct fs_path	*fs_path)
 {
+	struct fs_path	*fsp;
 	int		fd;
 	int		oflags;
 
@@ -118,6 +120,14 @@ openfile(
 			}
 		}
 	}
+
+	if (fs_path) {
+		fsp = fs_table_lookup(path, FS_MOUNT_POINT);
+		if (!fsp)
+			memset(fs_path, 0, sizeof(*fs_path));
+		else
+			*fs_path = *fsp;
+	}
 	return fd;
 }
 
@@ -126,7 +136,8 @@ addfile(
 	char		*name,
 	int		fd,
 	xfs_fsop_geom_t	*geometry,
-	int		flags)
+	int		flags,
+	struct fs_path	*fs_path)
 {
 	char		*filename;
 
@@ -154,6 +165,7 @@ addfile(
 	file->flags = flags;
 	file->name = filename;
 	file->geom = *geometry;
+	file->fs_path = *fs_path;
 	return 0;
 }
 
@@ -195,6 +207,7 @@ open_f(
 	char		*sp;
 	mode_t		mode = 0600;
 	xfs_fsop_geom_t	geometry = { 0 };
+	struct fs_path	fsp;
 
 	if (argc == 1) {
 		if (file)
@@ -257,14 +270,14 @@ open_f(
 		return -1;
 	}
 
-	fd = openfile(argv[optind], &geometry, flags, mode);
+	fd = openfile(argv[optind], &geometry, flags, mode, &fsp);
 	if (fd < 0)
 		return 0;
 
 	if (!platform_test_xfs_fd(fd))
 		flags |= IO_FOREIGN;
 
-	addfile(argv[optind], fd, &geometry, flags);
+	addfile(argv[optind], fd, &geometry, flags, &fsp);
 	return 0;
 }
 

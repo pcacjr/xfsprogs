@@ -121,7 +121,7 @@ copy_range_f(int argc, char **argv)
 	if (optind != argc - 1)
 		return command_usage(&copy_range_cmd);
 
-	fd = openfile(argv[optind], NULL, IO_READONLY, 0);
+	fd = openfile(argv[optind], NULL, IO_READONLY, 0, NULL);
 	if (fd < 0)
 		return 0;
 

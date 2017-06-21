@@ -17,6 +17,7 @@
  */
 
 #include "xfs.h"
+#include "path.h"
 
 /*
  * Read/write patterns (default is always "forward")
@@ -47,6 +48,7 @@ typedef struct fileio {
 	int		flags;		/* flags describing file state */
 	char		*name;		/* file name at time of open */
 	xfs_fsop_geom_t	geom;		/* XFS filesystem geometry */
+	struct fs_path	fs_path;	/* XFS path information */
 } fileio_t;
 
 extern fileio_t		*filetable;	/* open file table */
@@ -76,8 +78,10 @@ extern void *check_mapping_range(mmap_region_t *, off64_t, size_t, int);
  */
 
 extern off64_t		filesize(void);
-extern int		openfile(char *, xfs_fsop_geom_t *, int, mode_t);
-extern int		addfile(char *, int , xfs_fsop_geom_t *, int);
+extern int		openfile(char *, xfs_fsop_geom_t *, int, mode_t,
+				 struct fs_path *);
+extern int		addfile(char *, int , xfs_fsop_geom_t *, int,
+				struct fs_path *);
 extern void		printxattr(uint, int, int, const char *, int, int);
 
 extern unsigned int	recurse_all;
@@ -174,3 +178,9 @@ extern void		readdir_init(void);
 extern void		reflink_init(void);
 
 extern void		cowextsize_init(void);
+
+#ifdef HAVE_GETFSMAP
+extern void		fsmap_init(void);
+#else
+# define fsmap_init()	do { } while (0)
+#endif

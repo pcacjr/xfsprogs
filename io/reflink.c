@@ -154,7 +154,7 @@ dedupe_f(
 		return 0;
 	}
 
-	fd = openfile(infile, NULL, IO_READONLY, 0);
+	fd = openfile(infile, NULL, IO_READONLY, 0, NULL);
 	if (fd < 0)
 		return 0;
 
@@ -278,7 +278,7 @@ reflink_f(
 	}
 
 clone_all:
-	fd = openfile(infile, NULL, IO_READONLY, 0);
+	fd = openfile(infile, NULL, IO_READONLY, 0, NULL);
 	if (fd < 0)
 		return 0;
 

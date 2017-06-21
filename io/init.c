@@ -66,6 +66,7 @@ init_commands(void)
 	file_init();
 	flink_init();
 	freeze_init();
+	fsmap_init();
 	fsync_init();
 	getrusage_init();
 	help_init();
@@ -139,6 +140,7 @@ init(
 	char		*sp;
 	mode_t		mode = 0600;
 	xfs_fsop_geom_t	geometry = { 0 };
+	struct fs_path	fsp;
 
 	progname = basename(argv[0]);
 	setlocale(LC_ALL, "");
@@ -148,6 +150,7 @@ init(
 	pagesize = getpagesize();
 	gettimeofday(&stopwatch, NULL);
 
+	fs_table_initialise(0, NULL, 0, NULL);
 	while ((c = getopt(argc, argv, "ac:C:dFfim:p:nrRstTVx")) != EOF) {
 		switch (c) {
 		case 'a':
@@ -212,11 +215,12 @@ init(
 	}
 
 	while (optind < argc) {
-		if ((c = openfile(argv[optind], &geometry, flags, mode)) < 0)
+		c = openfile(argv[optind], &geometry, flags, mode, &fsp);
+		if (c < 0)
 			exit(1);
 		if (!platform_test_xfs_fd(c))
 			flags |= IO_FOREIGN;
-		if (addfile(argv[optind], c, &geometry, flags) < 0)
+		if (addfile(argv[optind], c, &geometry, flags, &fsp) < 0)
 			exit(1);
 		optind++;
 	}
