@@ -2815,6 +2815,28 @@ metadump_f(
 	metablock->mb_blocklog = BBSHIFT;
 	metablock->mb_magic = cpu_to_be32(XFS_MD_MAGIC);
 
+	/* Set flags about state of metadump */
+	metablock->mb_info = XFS_METADUMP_INFO_FLAGS;
+	if (obfuscate)
+		metablock->mb_info |= XFS_METADUMP_OBFUSCATED;
+	if (!zero_stale_data)
+		metablock->mb_info |= XFS_METADUMP_FULLBLOCKS;
+
+	/* If we'll copy the log, see if the log is dirty */
+	if (mp->m_sb.sb_logstart) {
+		push_cur();
+		set_cur(&typtab[TYP_LOG],
+			XFS_FSB_TO_DADDR(mp, mp->m_sb.sb_logstart),
+			mp->m_sb.sb_logblocks * blkbb, DB_RING_IGN, NULL);
+		if (iocur_top->data) {	/* best effort */
+			struct xlog	log;
+
+			if (xlog_is_dirty(mp, &log, &x, 0))
+				metablock->mb_info |= XFS_METADUMP_DIRTYLOG;
+		}
+		pop_cur();
+	}
+
 	block_index = (__be64 *)((char *)metablock + sizeof(xfs_metablock_t));
 	block_buffer = (char *)metablock + BBSIZE;
 	num_indices = (BBSIZE - sizeof(xfs_metablock_t)) / sizeof(__be64);
