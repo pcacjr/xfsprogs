@@ -2726,7 +2726,9 @@ copy_log(void)
 		/* keep the dirty log */
 		if (obfuscate)
 			print_warning(
-_("Filesystem log is dirty; image will contain unobfuscated metadata in log."));
+_("Warning: log recovery of an obfuscated metadata image can leak "
+"unobfuscated metadata and/or cause image corruption.  If possible, "
+"please mount the filesystem to clean the log, or disable obfuscation."));
 		break;
 	case -1:
 		/* log detection error */
