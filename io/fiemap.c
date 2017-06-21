@@ -18,6 +18,7 @@
 
 #include "platform_defs.h"
 #include "command.h"
+#include "input.h"
 #include <linux/fiemap.h>
 #include "init.h"
 #include "io.h"
@@ -46,19 +47,6 @@ fiemap_help(void)
 " -n -- query n extents.\n"
 " -v -- Verbose information\n"
 "\n"));
-}
-
-static int
-numlen(
-	__u64	val,
-	int	base)
-{
-	__u64	tmp;
-	int	len;
-
-	for (len = 0, tmp = val; tmp > 0; tmp = tmp/base)
-		len++;
-	return (len == 0 ? 1 : len);
 }
 
 static void

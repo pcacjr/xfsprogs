@@ -136,6 +136,19 @@ doneline(
 	free(vec);
 }
 
+size_t
+numlen(
+	uint64_t	val,
+	size_t		base)
+{
+	uint64_t	tmp;
+	size_t		len;
+
+	for (len = 0, tmp = val; tmp > 0; tmp = tmp / base)
+		len++;
+	return len == 0 ? 1 : len;
+}
+
 #define EXABYTES(x)	((long long)(x) << 60)
 #define PETABYTES(x)	((long long)(x) << 50)
 #define TERABYTES(x)	((long long)(x) << 40)
