@@ -22,6 +22,7 @@
 #include "command.h"
 #include "input.h"
 #include "init.h"
+#include "path.h"
 #include "space.h"
 
 static cmdinfo_t print_cmd;
@@ -55,8 +56,10 @@ print_f(
 int
 openfile(
 	char		*path,
-	xfs_fsop_geom_t	*geom)
+	xfs_fsop_geom_t	*geom,
+	struct fs_path	*fs_path)
 {
+	struct fs_path	*fsp;
 	int		fd;
 
 	fd = open(path, 0);
@@ -70,6 +73,16 @@ openfile(
 		close(fd);
 		return -1;
 	}
+
+	if (fs_path) {
+		fsp = fs_table_lookup(path, FS_MOUNT_POINT);
+		if (!fsp) {
+			fprintf(stderr, _("%s: cannot find mount point."),
+				path);
+			return -1;
+		}
+		memcpy(fs_path, fsp, sizeof(struct fs_path));
+	}
 	return fd;
 }
 
@@ -77,7 +90,8 @@ int
 addfile(
 	char		*name,
 	int		fd,
-	xfs_fsop_geom_t	*geometry)
+	xfs_fsop_geom_t	*geometry,
+	struct fs_path	*fs_path)
 {
 	char		*filename;
 
@@ -104,6 +118,7 @@ addfile(
 	file->fd = fd;
 	file->name = filename;
 	file->geom = *geometry;
+	memcpy(&file->fs_path, fs_path, sizeof(file->fs_path));
 	return 0;
 }
 

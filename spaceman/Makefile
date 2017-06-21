@@ -21,6 +21,13 @@ ifeq ($(ENABLE_EDITLINE),yes)
 LLDLIBS += $(LIBEDITLINE) $(LIBTERMCAP)
 endif
 
+# On linux we get fsmap from the system or define it ourselves
+# so include this based on platform type.  If this reverts to only
+# the autoconf check w/o local definition, change to testing HAVE_GETFSMAP
+ifeq ($(PKG_PLATFORM),linux)
+CFILES += freesp.c
+endif
+
 default: depend $(LTCOMMAND)
 
 include $(BUILDRULES)

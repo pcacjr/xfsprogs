@@ -20,6 +20,7 @@
 #include "command.h"
 #include "input.h"
 #include "init.h"
+#include "path.h"
 #include "space.h"
 
 char	*progname;
@@ -42,6 +43,7 @@ init_commands(void)
 	prealloc_init();
 	quit_init();
 	trim_init();
+	freesp_init();
 }
 
 static int
@@ -70,12 +72,14 @@ init(
 {
 	int		c;
 	xfs_fsop_geom_t	geometry = { 0 };
+	struct fs_path	fsp;
 
 	progname = basename(argv[0]);
 	setlocale(LC_ALL, "");
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
 
+	fs_table_initialise(0, NULL, 0, NULL);
 	while ((c = getopt(argc, argv, "c:V")) != EOF) {
 		switch (c) {
 		case 'c':
@@ -92,11 +96,11 @@ init(
 	if (optind != argc - 1)
 		usage();
 
-	if ((c = openfile(argv[optind], &geometry)) < 0)
+	if ((c = openfile(argv[optind], &geometry, &fsp)) < 0)
 		exit(1);
 	if (!platform_test_xfs_fd(c))
 		printf(_("Not an XFS filesystem!\n"));
-	if (addfile(argv[optind], c, &geometry) < 0)
+	if (addfile(argv[optind], c, &geometry, &fsp) < 0)
 		exit(1);
 
 	init_commands();

@@ -20,6 +20,7 @@
 #include "command.h"
 #include "input.h"
 #include "init.h"
+#include "path.h"
 #include "space.h"
 
 static cmdinfo_t prealloc_cmd;

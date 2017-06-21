@@ -20,6 +20,7 @@
 #include <linux/fs.h>
 #include "command.h"
 #include "init.h"
+#include "path.h"
 #include "space.h"
 #include "input.h"
 
