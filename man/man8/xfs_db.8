@@ -525,12 +525,17 @@ enables processing of realtime control file data.
 enables processing of realtime file data.
 .RE
 .TP
-.BI "freesp [\-bcds] [\-a " ag "] ... [\-e " i "] [\-h " h1 "] ... [\-m " m ]
+.BI "freesp [\-bcds] [\-A " alignment "] [\-a " ag "] ... [\-e " i "] [\-h " h1 "] ... [\-m " m ]
 Summarize free space for the filesystem. The free blocks are examined
 and totalled, and displayed in the form of a histogram, with a count
 of extents in each range of free extent sizes.
 .RS 1.0i
 .TP 0.4i
+.B \-A
+reports only free extents with starting blocks aligned to
+.I alignment
+blocks.
+.TP
 .B \-a
 adds
 .I ag
