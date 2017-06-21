@@ -277,3 +277,23 @@ AC_DEFUN([AC_NEED_INTERNAL_FSXATTR],
     )
     AC_SUBST(need_internal_fsxattr)
   ])
+
+#
+# Check if we have a FS_IOC_GETFSMAP ioctl (Linux)
+#
+AC_DEFUN([AC_HAVE_GETFSMAP],
+  [ AC_MSG_CHECKING([for GETFSMAP])
+    AC_TRY_LINK([
+#define _GNU_SOURCE
+#include <sys/syscall.h>
+#include <unistd.h>
+#include <linux/fs.h>
+#include <linux/fsmap.h>
+    ], [
+         unsigned long x = FS_IOC_GETFSMAP;
+         struct fsmap_head fh;
+    ], have_getfsmap=yes
+       AC_MSG_RESULT(yes),
+       AC_MSG_RESULT(no))
+    AC_SUBST(have_getfsmap)
+  ])
