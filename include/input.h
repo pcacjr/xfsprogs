@@ -28,6 +28,14 @@ extern char	**breakline(char *input, int *count);
 extern void	doneline(char *input, char **vec);
 extern char	*fetchline(void);
 
+extern int64_t	cvt_s64(char *s, int base);
+extern int32_t	cvt_s32(char *s, int base);
+extern int16_t	cvt_s16(char *s, int base);
+
+extern uint64_t	cvt_u64(char *s, int base);
+extern uint32_t	cvt_u32(char *s, int base);
+extern uint16_t	cvt_u16(char *s, int base);
+
 extern size_t numlen(uint64_t val, size_t base);
 extern long long cvtnum(size_t blocksize, size_t sectorsize, char *s);
 extern void	cvtstr(double value, char *str, size_t sz);
