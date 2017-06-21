@@ -43,6 +43,7 @@ static long long	multsize;
 static int		histcount;
 static int		seen1;
 static int		summaryflag;
+static int		gflag;
 static bool		rtflag;
 static long long	totblocks;
 static long long	totexts;
@@ -164,6 +165,8 @@ scan_ag(
 	off64_t			bperag;
 	off64_t			aglen;
 	xfs_agblock_t		agbno;
+	unsigned long long	freeblks = 0;
+	unsigned long long	freeexts = 0;
 	int			ret;
 	int			i;
 
@@ -216,6 +219,8 @@ scan_ag(
 			agbno = (extent->fmr_physical - (bperag * agno)) /
 								blocksize;
 			aglen = extent->fmr_length / blocksize;
+			freeblks += aglen;
+			freeexts++;
 
 			addtohist(agno, agbno, aglen);
 		}
@@ -224,6 +229,15 @@ scan_ag(
 		if (p->fmr_flags & FMR_OF_LAST)
 			break;
 		fsmap_advance(fsmap);
+	}
+
+	if (gflag) {
+		if (agno == NULLAGNUMBER)
+			printf(_("     rtdev %10llu %10llu\n"), freeexts,
+					freeblks);
+		else
+			printf(_("%10u %10llu %10llu\n"), agno, freeexts,
+					freeblks);
 	}
 }
 static void
@@ -251,14 +265,14 @@ init(
 	int		c;
 	int		speced = 0;	/* only one of -b -e -h or -m */
 
-	agcount = dumpflag = equalsize = multsize = optind = 0;
+	agcount = dumpflag = equalsize = multsize = optind = gflag = 0;
 	histcount = seen1 = summaryflag = 0;
 	totblocks = totexts = 0;
 	aglist = NULL;
 	hist = NULL;
 	rtflag = false;
 
-	while ((c = getopt(argc, argv, "a:bde:h:m:rs")) != EOF) {
+	while ((c = getopt(argc, argv, "a:bde:gh:m:rs")) != EOF) {
 		switch (c) {
 		case 'a':
 			aglistadd(optarg);
@@ -279,6 +293,10 @@ init(
 			if (errno)
 				return command_usage(&freesp_cmd);
 			speced = 1;
+			break;
+		case 'g':
+			histcount = 0;
+			gflag++;
 			break;
 		case 'h':
 			if (speced && !histcount)
@@ -331,13 +349,15 @@ freesp_f(
 
 	if (!init(argc, argv))
 		return 0;
+	if (gflag)
+		printf(_("        AG    extents     blocks\n"));
 	if (rtflag)
 		scan_ag(NULLAGNUMBER);
 	for (agno = 0; !rtflag && agno < file->geom.agcount; agno++)  {
 		if (inaglist(agno))
 			scan_ag(agno);
 	}
-	if (histcount)
+	if (histcount && !gflag)
 		printhist();
 	if (summaryflag) {
 		printf(_("total free extents %lld\n"), totexts);
@@ -363,6 +383,7 @@ freesp_help(void)
 " -b       -- binary histogram bin size\n"
 " -d       -- debug output\n"
 " -e bsize -- Use fixed histogram bin size of bsize\n"
+" -g       -- Print only a per-AG summary.\n"
 " -h hbsz  -- Use custom histogram bin size of h1.\n"
 "             Multiple specifications are allowed.\n"
 " -m bmult -- Use histogram bin size multiplier of bmult.\n"
@@ -382,7 +403,7 @@ freesp_init(void)
 	freesp_cmd.cfunc = freesp_f;
 	freesp_cmd.argmin = 0;
 	freesp_cmd.argmax = -1;
-	freesp_cmd.args = "[-drs] [-a agno]... [ -b | -e bsize | -h h1... | -m bmult ]";
+	freesp_cmd.args = "[-dgrs] [-a agno]... [ -b | -e bsize | -h h1... | -m bmult ]";
 	freesp_cmd.flags = CMD_FLAG_ONESHOT;
 	freesp_cmd.oneline = _("Examine filesystem free space");
 	freesp_cmd.help = freesp_help;

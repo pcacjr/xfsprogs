@@ -25,7 +25,7 @@ then the program exits.
 
 .SH COMMANDS
 .TP
-.BI "freesp [ \-drs ] [-a agno]... [ \-b | \-e bsize | \-h bsize | \-m factor ]"
+.BI "freesp [ \-dgrs ] [-a agno]... [ \-b | \-e bsize | \-h bsize | \-m factor ]"
 With no arguments,
 .B freesp
 shows a histogram of all free space extents in the filesystem.
@@ -47,6 +47,10 @@ This is the default, and is mutually exclusive with the
 .TP
 .B \-d
 Print debugging information such as the raw free space extent information.
+
+.TP
+.B \-g
+Print the free space block and extent counts for each AG.
 
 .TP
 .B \-e bsize
