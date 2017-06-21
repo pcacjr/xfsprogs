@@ -34,5 +34,6 @@ extern int	addfile(char *, int , xfs_fsop_geom_t *);
 extern void	print_init(void);
 extern void	help_init(void);
 extern void	quit_init(void);
+extern void	trim_init(void);
 
 #endif /* XFS_SPACEMAN_SPACE_H_ */

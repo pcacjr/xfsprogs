@@ -40,6 +40,7 @@ init_commands(void)
 	print_init();
 	help_init();
 	quit_init();
+	trim_init();
 }
 
 static int
