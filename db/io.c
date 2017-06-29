@@ -536,9 +536,9 @@ write_cur(void)
 
 void
 set_cur(
-	const typ_t	*t,
-	__int64_t	d,
-	int		c,
+	const typ_t	*type,
+	xfs_daddr_t	blknum,
+	int		len,
 	int		ring_flag,
 	bbmap_t		*bbmap)
 {
@@ -546,13 +546,12 @@ set_cur(
 	xfs_ino_t	dirino;
 	xfs_ino_t	ino;
 	__uint16_t	mode;
-	const struct xfs_buf_ops *ops = t ? t->bops : NULL;
+	const struct xfs_buf_ops *ops = type ? type->bops : NULL;
 
 	if (iocur_sp < 0) {
 		dbprintf(_("set_cur no stack element to set\n"));
 		return;
 	}
-
 
 	ino = iocur_top->ino;
 	dirino = iocur_top->dirino;
@@ -563,7 +562,7 @@ set_cur(
 	if (bbmap) {
 #ifdef DEBUG_BBMAP
 		int i;
-		printf(_("xfs_db got a bbmap for %lld\n"), (long long)d);
+		printf(_("xfs_db got a bbmap for %lld\n"), (long long)blknum);
 		printf(_("\tblock map"));
 		for (i = 0; i < bbmap->nmaps; i++)
 			printf(" %lld:%d", (long long)bbmap->b[i].bm_bn,
@@ -577,7 +576,7 @@ set_cur(
 		bp = libxfs_readbuf_map(mp->m_ddev_targp, bbmap->b,
 					bbmap->nmaps, 0, ops);
 	} else {
-		bp = libxfs_readbuf(mp->m_ddev_targp, d, c, 0, ops);
+		bp = libxfs_readbuf(mp->m_ddev_targp, blknum, len, 0, ops);
 		iocur_top->bbmap = NULL;
 	}
 
@@ -593,13 +592,13 @@ set_cur(
 	if (!ops)
 		bp->b_flags |= LIBXFS_B_UNCHECKED;
 
-	iocur_top->bb = d;
-	iocur_top->blen = c;
+	iocur_top->bb = blknum;
+	iocur_top->blen = len;
 	iocur_top->boff = 0;
 	iocur_top->data = iocur_top->buf;
-	iocur_top->len = BBTOB(c);
-	iocur_top->off = d << BBSHIFT;
-	iocur_top->typ = cur_typ = t;
+	iocur_top->len = BBTOB(len);
+	iocur_top->off = blknum << BBSHIFT;
+	iocur_top->typ = cur_typ = type;
 	iocur_top->ino = ino;
 	iocur_top->dirino = dirino;
 	iocur_top->mode = mode;
@@ -613,23 +612,24 @@ set_cur(
 
 void
 set_iocur_type(
-	const typ_t	*t)
+	const typ_t	*type)
 {
 	struct xfs_buf	*bp = iocur_top->bp;
 
 	/* adjust buffer size for types with fields & hence fsize() */
-	if (t->fields) {
+	if (type->fields) {
 		int bb_count;	/* type's size in basic blocks */
 
-		bb_count = BTOBB(byteize(fsize(t->fields, iocur_top->data, 0, 0)));
-		set_cur(t, iocur_top->bb, bb_count, DB_RING_IGN, NULL);
+		bb_count = BTOBB(byteize(fsize(type->fields,
+					       iocur_top->data, 0, 0)));
+		set_cur(type, iocur_top->bb, bb_count, DB_RING_IGN, NULL);
 	}
-	iocur_top->typ = t;
+	iocur_top->typ = type;
 
 	/* verify the buffer if the type has one. */
 	if (!bp)
 		return;
-	if (!t->bops) {
+	if (!type->bops) {
 		bp->b_ops = NULL;
 		bp->b_flags |= LIBXFS_B_UNCHECKED;
 		return;
@@ -637,7 +637,7 @@ set_iocur_type(
 	if (!(bp->b_flags & LIBXFS_B_UPTODATE))
 		return;
 	bp->b_error = 0;
-	bp->b_ops = t->bops;
+	bp->b_ops = type->bops;
 	bp->b_ops->verify_read(bp);
 	bp->b_flags &= ~LIBXFS_B_UNCHECKED;
 }

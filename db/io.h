@@ -59,10 +59,10 @@ extern void	print_iocur(char *tag, iocur_t *ioc);
 extern void	push_cur(void);
 extern int	read_buf(__int64_t daddr, int count, void *bufp);
 extern void     write_cur(void);
-extern void	set_cur(const struct typ *t, __int64_t d, int c, int ring_add,
-			bbmap_t *bbmap);
+extern void	set_cur(const struct typ *type, xfs_daddr_t blknum,
+			int len, int ring_add, bbmap_t *bbmap);
 extern void     ring_add(void);
-extern void	set_iocur_type(const struct typ *t);
+extern void	set_iocur_type(const struct typ *type);
 extern void	xfs_dummy_verify(struct xfs_buf *bp);
 extern void	xfs_verify_recalc_inode_crc(struct xfs_buf *bp);
 extern void	xfs_verify_recalc_dquot_crc(struct xfs_buf *bp);
