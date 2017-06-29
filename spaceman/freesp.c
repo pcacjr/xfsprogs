@@ -239,7 +239,9 @@ scan_ag(
 			printf(_("%10u %10llu %10llu\n"), agno, freeexts,
 					freeblks);
 	}
+	free(fsmap);
 }
+
 static void
 aglistadd(
 	char		*a)
