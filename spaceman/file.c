@@ -79,6 +79,7 @@ openfile(
 		if (!fsp) {
 			fprintf(stderr, _("%s: cannot find mount point."),
 				path);
+			close(fd);
 			return -1;
 		}
 		memcpy(fs_path, fsp, sizeof(struct fs_path));
