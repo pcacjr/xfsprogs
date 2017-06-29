@@ -28,6 +28,7 @@
 #include "init.h"
 #include "malloc.h"
 #include "crc.h"
+#include "bit.h"
 
 static int	pop_f(int argc, char **argv);
 static void     pop_help(void);
@@ -616,6 +617,13 @@ set_iocur_type(
 {
 	struct xfs_buf	*bp = iocur_top->bp;
 
+	/* adjust buffer size for types with fields & hence fsize() */
+	if (t->fields) {
+		int bb_count;	/* type's size in basic blocks */
+
+		bb_count = BTOBB(byteize(fsize(t->fields, iocur_top->data, 0, 0)));
+		set_cur(t, iocur_top->bb, bb_count, DB_RING_IGN, NULL);
+	}
 	iocur_top->typ = t;
 
 	/* verify the buffer if the type has one. */
