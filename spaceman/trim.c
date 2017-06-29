@@ -77,7 +77,7 @@ trim_f(
 		length = cvtnum(file->geom.blocksize, file->geom.sectsize,
 				argv[optind + 1]);
 	} else if (agno) {
-		offset = agno * file->geom.agblocks * file->geom.blocksize;
+		offset = (off64_t)agno * file->geom.agblocks * file->geom.blocksize;
 		length = file->geom.agblocks * file->geom.blocksize;
 	} else {
 		offset = 0;
