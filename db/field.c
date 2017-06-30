@@ -91,12 +91,14 @@ const ftattr_t	ftattrtab[] = {
 /* attr3 specific fields */
 	{ FLDT_ATTR3, "attr3", NULL, (char *)attr3_flds, attr_size, FTARG_SIZE,
 	  NULL, attr3_flds },
+	{ FLDT_ATTR3_BLKINFO, "attr3_blkinfo", NULL, (char *)attr3_blkinfo_flds,
+	  SI(bitsz(struct xfs_da3_blkinfo)), 0, NULL, attr3_blkinfo_flds },
 	{ FLDT_ATTR3_LEAF_HDR, "attr3_leaf_hdr", NULL,
 	  (char *)attr3_leaf_hdr_flds, SI(bitsz(struct xfs_attr3_leaf_hdr)),
 	  0, NULL, attr3_leaf_hdr_flds },
 	{ FLDT_ATTR3_NODE_HDR, "attr3_node_hdr", NULL,
-	  (char *)da3_node_hdr_flds, SI(bitsz(struct xfs_da3_node_hdr)),
-	  0, NULL, da3_node_hdr_flds },
+	  (char *)attr3_node_hdr_flds, SI(bitsz(struct xfs_da3_node_hdr)),
+	  0, NULL, attr3_node_hdr_flds },
 
 	{ FLDT_BMAPBTA, "bmapbta", NULL, (char *)bmapbta_flds, btblock_size,
 	  FTARG_SIZE, NULL, bmapbta_flds },

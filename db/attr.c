@@ -499,7 +499,7 @@ const field_t	attr3_hfld[] = {
 const field_t	attr3_flds[] = {
 	{ "hdr", FLDT_ATTR3_LEAF_HDR, OI(L3OFF(hdr)), attr3_leaf_hdr_count,
 	  FLD_COUNT, TYP_NONE },
-	{ "hdr", FLDT_DA3_NODE_HDR, OI(N3OFF(hdr)), attr3_node_hdr_count,
+	{ "hdr", FLDT_ATTR3_NODE_HDR, OI(N3OFF(hdr)), attr3_node_hdr_count,
 	  FLD_COUNT, TYP_NONE },
 	{ "entries", FLDT_ATTR_LEAF_ENTRY, OI(L3OFF(entries)),
 	  attr3_leaf_entries_count, FLD_ARRAY|FLD_COUNT, TYP_NONE },
@@ -512,7 +512,7 @@ const field_t	attr3_flds[] = {
 
 #define	LH3OFF(f)	bitize(offsetof(struct xfs_attr3_leaf_hdr, f))
 const field_t	attr3_leaf_hdr_flds[] = {
-	{ "info", FLDT_DA3_BLKINFO, OI(LH3OFF(info)), C1, 0, TYP_NONE },
+	{ "info", FLDT_ATTR3_BLKINFO, OI(LH3OFF(info)), C1, 0, TYP_NONE },
 	{ "count", FLDT_UINT16D, OI(LH3OFF(count)), C1, 0, TYP_NONE },
 	{ "usedbytes", FLDT_UINT16D, OI(LH3OFF(usedbytes)), C1, 0, TYP_NONE },
 	{ "firstused", FLDT_UINT16D, OI(LH3OFF(firstused)), C1, 0, TYP_NONE },
@@ -520,6 +520,26 @@ const field_t	attr3_leaf_hdr_flds[] = {
 	{ "pad1", FLDT_UINT8X, OI(LH3OFF(pad1)), C1, FLD_SKIPALL, TYP_NONE },
 	{ "freemap", FLDT_ATTR_LEAF_MAP, OI(LH3OFF(freemap)),
 	  CI(XFS_ATTR_LEAF_MAPSIZE), FLD_ARRAY, TYP_NONE },
+	{ NULL }
+};
+
+#define	B3OFF(f)	bitize(offsetof(struct xfs_da3_blkinfo, f))
+const field_t	attr3_blkinfo_flds[] = {
+	{ "hdr", FLDT_ATTR_BLKINFO, OI(B3OFF(hdr)), C1, 0, TYP_NONE },
+	{ "crc", FLDT_CRC, OI(B3OFF(crc)), C1, 0, TYP_NONE },
+	{ "bno", FLDT_DFSBNO, OI(B3OFF(blkno)), C1, 0, TYP_BMAPBTD },
+	{ "lsn", FLDT_UINT64X, OI(B3OFF(lsn)), C1, 0, TYP_NONE },
+	{ "uuid", FLDT_UUID, OI(B3OFF(uuid)), C1, 0, TYP_NONE },
+	{ "owner", FLDT_INO, OI(B3OFF(owner)), C1, 0, TYP_NONE },
+	{ NULL }
+};
+
+#define	H3OFF(f)	bitize(offsetof(struct xfs_da3_node_hdr, f))
+const field_t	attr3_node_hdr_flds[] = {
+	{ "info", FLDT_ATTR3_BLKINFO, OI(H3OFF(info)), C1, 0, TYP_NONE },
+	{ "count", FLDT_UINT16D, OI(H3OFF(__count)), C1, 0, TYP_NONE },
+	{ "level", FLDT_UINT16D, OI(H3OFF(__level)), C1, 0, TYP_NONE },
+	{ "pad", FLDT_UINT32D, OI(H3OFF(__pad32)), C1, 0, TYP_NONE },
 	{ NULL }
 };
 
