@@ -1,3 +1,15 @@
+xfsprogs-4.12.0-rc1 (30 Jun 2017)
+	- xfs_spaceman: new space management tool (Dave Chinner, Darrick Wong)
+	- xfs_io: implement fsmap command (Darrick Wong)
+	- xfs_repair: fix 512 sector image repair on 4k sector host (Zorro Lang)
+	- xfs_growfs: ensure target is an active xfs mountpoint (Bill O'Donnell)
+	- xfs_metadump: warn about corruption if log is dirty (Jan Tulak)
+	- xfs_metadump: tag metadump with informational flags (Eric Sandeen)
+	- xfs_db: fix 'type' command for interesting geoms (Bill O'Donnell)
+	- xfs_db: add alignment filter to freesp command (Eric Sandeen)
+	- libxfs: use crc32c slice-by-8 variant by default (Darrick Wong)
+	- update Polish translation (Jakub Bogusz)
+
 xfsprogs-4.11.0 (5 May 2017)
 	- xfs_io: man page fixups (Zorro Lang)
 
