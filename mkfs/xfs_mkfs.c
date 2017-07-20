@@ -1419,6 +1419,7 @@ main(
 	int			dsw;
 	int			dsunit;
 	int			dswidth;
+	int			dsflag;
 	int			force_overwrite;
 	struct fsxattr		fsx;
 	int			ilflag;
@@ -1521,7 +1522,7 @@ main(
 	dfile = logfile = rtfile = NULL;
 	dsize = logsize = rtsize = rtextsize = protofile = NULL;
 	dsu = dsw = dsunit = dswidth = lalign = lsu = lsunit = 0;
-	nodsflag = norsflag = 0;
+	dsflag = nodsflag = norsflag = 0;
 	force_overwrite = 0;
 	worst_freelist = 0;
 	memset(&fsx, 0, sizeof(fsx));
@@ -1587,16 +1588,20 @@ main(
 					break;
 				case D_SUNIT:
 					dsunit = getnum(value, &dopts, D_SUNIT);
+					dsflag = 1;
 					break;
 				case D_SWIDTH:
 					dswidth = getnum(value, &dopts,
 							 D_SWIDTH);
+					dsflag = 1;
 					break;
 				case D_SU:
 					dsu = getnum(value, &dopts, D_SU);
+					dsflag = 1;
 					break;
 				case D_SW:
 					dsw = getnum(value, &dopts, D_SW);
+					dsflag = 1;
 					break;
 				case D_NOALIGN:
 					nodsflag = getnum(value, &dopts,
@@ -2302,6 +2307,10 @@ _("rmapbt not supported with realtime devices\n"));
 
 	calc_stripe_factors(dsu, dsw, sectorsize, lsu, lsectorsize,
 				&dsunit, &dswidth, &lsunit);
+
+	/* If sunit & swidth were manually specified as 0, same as noalign */
+	if (dsflag && !dsunit && !dswidth)
+		nodsflag = 1;
 
 	xi.setblksize = sectorsize;
 
