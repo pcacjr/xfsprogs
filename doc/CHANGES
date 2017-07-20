@@ -1,3 +1,9 @@
+xfsprogs-4.12.0 (20 Jul 2017)
+	 - mkfs.xfs: allow specification of 0 stripe width & unit (Eric Sandeen)
+	 - xfs_db: redirect printfs when metadumping to stdout (Darrick Wong)
+	 - libxfs: propagate transaction block reservations (Darrick Wong)
+	 - xfs_db: properly set inode type (Eric Sandeen)
+
 xfsprogs-4.12.0-rc2 (13 Jul 2017)
 	- mkfs.xfs: minimum log size calculation fixes (Darrick Wong)
 
