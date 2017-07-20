@@ -2750,6 +2750,7 @@ metadump_f(
 	xfs_agnumber_t	agno;
 	int		c;
 	int		start_iocur_sp;
+	bool		stdout_metadump = false;
 	char		*p;
 
 	exitcode = 1;
@@ -2864,7 +2865,15 @@ metadump_f(
 			free(metablock);
 			return 0;
 		}
+		/*
+		 * Redirect stdout to stderr for the duration of the
+		 * metadump operation so that dbprintf and other messages
+		 * are sent to the console instead of polluting the
+		 * metadump stream.
+		 */
 		outf = stdout;
+		stdout = stderr;
+		stdout_metadump = true;
 	} else {
 		outf = fopen(argv[optind], "wb");
 		if (outf == NULL) {
@@ -2896,9 +2905,11 @@ metadump_f(
 		exitcode = write_index() < 0;
 
 	if (progress_since_warning)
-		fputc('\n', (outf == stdout) ? stderr : stdout);
+		fputc('\n', stdout_metadump ? stderr : stdout);
 
-	if (outf != stdout)
+	if (stdout_metadump)
+		stdout = outf;
+	else
 		fclose(outf);
 
 	/* cleanup iocur stack */
