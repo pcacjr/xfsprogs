@@ -106,6 +106,7 @@ libxfs_trans_roll(
 	struct xfs_mount	*mp;
 	struct xfs_trans	*trans;
 	struct xfs_trans_res	tres;
+	unsigned int		old_blk_res;
 	int			error;
 
 	/*
@@ -121,6 +122,7 @@ libxfs_trans_roll(
 	mp = trans->t_mountp;
 	tres.tr_logres = trans->t_log_res;
 	tres.tr_logcount = trans->t_log_count;
+	old_blk_res = trans->t_blk_res;
 
 	/*
 	 * Commit the current transaction.
@@ -145,6 +147,8 @@ libxfs_trans_roll(
 	tres.tr_logflags = XFS_TRANS_PERM_LOG_RES;
 	error = libxfs_trans_alloc(mp, &tres, 0, 0, 0, tpp);
 	trans = *tpp;
+	trans->t_blk_res = old_blk_res;
+
 	/*
 	 *  Ensure that the inode is in the new transaction and locked.
 	 */
@@ -185,6 +189,7 @@ libxfs_trans_alloc(
 		exit(1);
 	}
 	ptr->t_mountp = mp;
+	ptr->t_blk_res = blocks;
 	INIT_LIST_HEAD(&ptr->t_items);
 #ifdef XACT_DEBUG
 	fprintf(stderr, "allocated new transaction %p\n", ptr);
@@ -750,7 +755,7 @@ trans_committed(
         list_for_each_entry_safe(lidp, next, &tp->t_items, lid_trans) {
 		struct xfs_log_item *lip = lidp->lid_item;
 
-                xfs_trans_del_item(lip);
+		xfs_trans_del_item(lip);
 
 		if (lip->li_type == XFS_LI_BUF)
 			buf_item_done((xfs_buf_log_item_t *)lip);
